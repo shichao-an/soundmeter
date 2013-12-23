@@ -7,7 +7,7 @@ requires = ['pyaudio', 'pydub']
 setup(
     name='soundmeter',
     version=__version__,
-    description="Real-time sound meter.",
+    description="Simple real-time sound meter.",
     long_description=open('README.rst').read(),
     keywords='soundmeter',
     author='Shichao An',

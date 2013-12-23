@@ -1,6 +1,6 @@
 SoundMeter
 ==========
-SoundMeter is a command-line tool to obtain sound power in real time.
+SoundMeter is a command-line tool to obtain sound power in real time. It basically turns audio recording functionality into a sound meter for machines that ship with microphones.
 
 Features
 --------
