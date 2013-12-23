@@ -3,9 +3,11 @@
 # soundmeter --threshold <RMS value> --duration <segments> --trigger script.sh
 # soundmeter --test --duration <seconds>
 # soundmeter --log <filename>
+import os
 import pyaudio
 from pydub import AudioSegment
 import wave
+import signal
 import sys
 try:
     from cStringIO import StringIO
@@ -49,6 +51,14 @@ def monitor():
 def main():
     while True:
         monitor()
+
+
+def sigint_handler(signum, frame):
+    sys.stdout.write('\r\n')
+    os._exit(1)
+
+
+signal.signal(signal.SIGINT, sigint_handler)
 
 
 if __name__ == "__main__":
