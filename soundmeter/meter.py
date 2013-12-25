@@ -2,7 +2,9 @@
 # TODO
 # soundmeter --threshold <RMS value> --duration <segments> --trigger script.sh
 # soundmeter --test --duration <seconds>
+# soundmeter --collect/-c [seconds]
 # soundmeter --log <filename>
+import argparse
 import os
 import pyaudio
 from pydub import AudioSegment
@@ -35,7 +37,6 @@ def meter():
     stream.close()
     p.terminate()
 
-    # Process output
     output.seek(0)
     wf = wave.open(output, 'wb')
     wf.setnchannels(CHANNELS)
@@ -45,7 +46,15 @@ def meter():
     data = output.getvalue()
     segment = AudioSegment(data)
     sys.stdout.write('\r%10d  ' % segment.rms)
-    sys.stdout.flush()
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-c', '--collect', type=float, nargs='?', const=10.0,
+                       default=argparse.SUPPRESS,
+                       help='Collect RMS values to determine thresholds.')
+    parser.add_argument('--log', nargs=1, type=argparse.FileType('a'))
 
 
 def main():
@@ -61,5 +70,5 @@ def sigint_handler(signum, frame):
 signal.signal(signal.SIGINT, sigint_handler)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
