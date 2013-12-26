@@ -21,10 +21,11 @@ _soundmeter = None
 
 
 class Meter(object):
-    def __init__(self, collect=False, action=None, threshold=None,
-                 num=None, script=None):
+    def __init__(self, collect=False, seconds=None, action=None,
+                 threshold=None, num=None, script=None):
         """
         :param collect: A boolean indicating whether collecting RMS values
+        :param seconds: Number of seconds to run the meter
         :param action: The action type
         :param threshold: A string representing threshold and bound type (e.g.
             '+252', '-144')
@@ -48,6 +49,7 @@ class Meter(object):
         self.num = num
         self.script = script
         self._data = {}
+        signal.setitimer(signal.ITIMER_REAL, seconds)
 
     def record(self):
         """Record PyAudio stream into StringIO output"""
@@ -200,10 +202,11 @@ def clear_stdout():
 
 def main():
     #signal.setitimer(signal.ITIMER_REAL, 3.5)
-    m = Meter(action='exec', threshold='+300', num=2)
+    m = Meter(seconds=3, action='exec', threshold='+300', num=2)
     m.start()
 
 
+# Signal handlers
 def sigint_handler(signum, frame):
     clear_stdout()
     _soundmeter.stop()
