@@ -16,6 +16,8 @@ _soundmeter = None
 
 class Meter(object):
 
+    num_frames = int(RATE / FRAMES_PER_BUFFER * AUDIO_SEGMENT_LENGTH)
+
     class StopException(Exception):
         pass
 
@@ -58,9 +60,9 @@ class Meter(object):
         """Record PyAudio stream into StringIO output"""
 
         frames = []
-        n = int(RATE / FRAMES_PER_BUFFER * AUDIO_SEGMENT_LENGTH)
+        num_frames = self.__class__.num_frames
         self.stream.start_stream()
-        for i in xrange(n):
+        for i in xrange(num_frames):
             data = self.stream.read(FRAMES_PER_BUFFER)
             frames.append(data)
         self.stream.stop_stream()
