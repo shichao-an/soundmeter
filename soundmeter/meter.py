@@ -4,7 +4,7 @@
 # soundmeter --collect/-c [seconds]
 # soundmeter --log <filename>
 import argparse
-import os
+#import os
 import pyaudio
 import pydub
 import wave
@@ -22,7 +22,7 @@ _soundmeter = None
 
 class Meter(object):
     def __init__(self, collect=False, action=None, threshold=None,
-                 num=None, execute=None):
+                 num=None, script=None):
         """
         :param collect: A boolean indicating whether collecting RMS values
         :param action: The action type
@@ -30,7 +30,7 @@ class Meter(object):
             '+252', '-144')
         :param num: An integer indicating how many consecutive times the
             threshold is reached before triggering the action
-        :param execute: File object representing the script to be executed
+        :param script: File object representing the script to be executed
         """
 
         global _soundmeter
@@ -46,7 +46,7 @@ class Meter(object):
         self.action = action
         self.threshold = threshold
         self.num = num
-        self.execute = execute
+        self.script = script
         self._data = {}
 
     def record(self):
@@ -81,7 +81,8 @@ class Meter(object):
                 self.collect_rms(rms)
             self.meter(rms)
             if self.action:
-                pass
+                if self.is_triggered(rms):
+                    self.execute()
 
     def meter(self, rms):
         sys.stdout.write('\r%10d  ' % rms)
@@ -92,10 +93,11 @@ class Meter(object):
         self.stream.stop_stream()
         self.audio.terminate()
         if self.collect:
-            print 'Collected result:'
-            print '    min: %10d' % self._data['min']
-            print '    max: %10d' % self._data['max']
-            print '    avg: %10d' % int(self._data['avg'])
+            if self._data:
+                print 'Collected result:'
+                print '    min: %10d' % self._data['min']
+                print '    max: %10d' % self._data['max']
+                print '    avg: %10d' % int(self._data['avg'])
 
     def get_threshold(self):
         """Get and validate raw RMS value from threshold"""
@@ -130,7 +132,16 @@ class Meter(object):
         return False
 
     def execute(self):
-        pass
+        if self.action == 'stop':
+            self.stop()
+            print 'Stopped'
+            sys.exit(0)
+        if self.action == 'stop-exec':
+            self.stop()
+            print 'Stopped and exec'
+            sys.exit(0)
+        if self.action == 'exec':
+            print 'Exec'
 
     def collect_rms(self, rms):
         """Collect and calculate min, max and average RMS values"""
@@ -156,19 +167,30 @@ def parse_args():
     seconds_help = 'time in seconds to run the meter (default forever)'
     parser.add_argument('-s', '--seconds',
                         help=seconds_help)
-    parser.add_argument('-a', '--action', default='exec',
+    parser.add_argument('-a', '--action',
                         choices=['stop', 'stop-exec', 'exec'])
     trigger_help = 'trigger condition (threshold RMS and number of times)'
     parser.add_argument('-t', '--trigger', nargs=2,
                         metavar=('[+|-]THRESHOLD', 'NUM'),
                         help=trigger_help)
-    parser.add_argument('-e', '--exec', metavar='SCRIPT',
+    parser.add_argument('-e', '--exec', dest='script', metavar='SCRIPT',
                         help='shell script to execute upon trigger')
     parser.add_argument('-d', '--daemonize', action='store_true',
                         help='run the meter in the background')
     parser.add_argument('--log', nargs='?', metavar='LOGFILE',
                         help='log the meter (default to ~/.soundmeter/log)')
     args = parser.parse_args()
+    if args.collect:
+        if args.action:
+            msg = '-c/--collect should not be used with -a/--action'
+            raise parser.error(msg)
+    if args.action:
+        if not args.trigger:
+            msg = 'must specify -t/--trigger when using -a/--action'
+            raise parser.error(msg)
+        if args.action in ['stop-exec', 'exec'] and not args.script:
+            msg = 'must specify -e/--exec when using -a/--action'
+            raise parser.error(msg)
     print args
 
 
@@ -177,23 +199,21 @@ def clear_stdout():
 
 
 def main():
-    signal.setitimer(signal.ITIMER_REAL, 3.5)
-    #while True:
-        #meter()
-    m = Meter(collect=True)
+    #signal.setitimer(signal.ITIMER_REAL, 3.5)
+    m = Meter(action='exec', threshold='+300', num=2)
     m.start()
 
 
 def sigint_handler(signum, frame):
     clear_stdout()
     _soundmeter.stop()
-    os._exit(1)
+    sys.exit(1)
 
 
 def sigalrm_handler(signum, frame):
     clear_stdout()
     _soundmeter.stop()
-    os._exit(0)
+    sys.exit(0)
 
 
 # Register signal handlers
