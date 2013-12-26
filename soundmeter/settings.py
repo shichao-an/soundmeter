@@ -3,6 +3,7 @@ import os
 import pyaudio
 
 
+PROG = 'soundmeter'
 FRAMES_PER_BUFFER = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 2
