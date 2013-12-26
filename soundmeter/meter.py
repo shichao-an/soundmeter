@@ -15,6 +15,10 @@ _soundmeter = None
 
 
 class Meter(object):
+
+    class StopException(Exception):
+        pass
+
     def __init__(self, collect=False, seconds=None, action=None,
                  threshold=None, num=None, script=None, log=None,
                  daemonize=False):
@@ -89,8 +93,9 @@ class Meter(object):
                 if self.action:
                     if self.is_triggered(rms):
                         self.execute()
-        except Exception, e:
-            print e
+                self.monitor(rms)
+
+        except self.__class__.StopException:
             self.is_running = False
             self.stop()
 
@@ -144,12 +149,16 @@ class Meter(object):
     def execute(self):
         if self.action == 'stop':
             print 'Stopped'
-            raise Exception('stop')
+            raise self.__class__.StopException('stop')
         elif self.action == 'stop-exec':
             print 'Stopped and exec'
-            raise Exception('stop-exec')
+            raise self.__class__.StopException('stop-exec')
         elif self.action == 'exec':
             print 'Exec'
+
+    def monitor(self, rms):
+        """This function is to be overridden"""
+        pass
 
     def collect_rms(self, rms):
         """Collect and calculate min, max and average RMS values"""
