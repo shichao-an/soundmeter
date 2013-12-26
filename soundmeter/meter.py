@@ -16,16 +16,19 @@ _soundmeter = None
 
 class Meter(object):
     def __init__(self, collect=False, seconds=None, action=None,
-                 threshold=None, num=None, script=None):
+                 threshold=None, num=None, script=None, log=None,
+                 daemonize=False):
         """
         :param collect: A boolean indicating whether collecting RMS values
-        :param seconds: Number of seconds to run the meter
-        :param action: The action type
+        :param seconds: Number of seconds to run the meter (None for forever)
+        :param action: The action type ('stop', 'stop-exec' or 'exec')
         :param threshold: A string representing threshold and bound type (e.g.
             '+252', '-144')
         :param num: An integer indicating how many consecutive times the
             threshold is reached before triggering the action
         :param script: File object representing the script to be executed
+        :param log: File object representing the log file
+        :param daemonize: A boolean indicating whether meter is run as daemon
         """
 
         global _soundmeter
@@ -38,12 +41,14 @@ class Meter(object):
                                       input=True,
                                       frames_per_buffer=FRAMES_PER_BUFFER)
         self.collect = collect
+        self.seconds = seconds
         self.action = action
         self.threshold = threshold
         self.num = num
         self.script = script
+        self.log = log
+        self.daemonize = daemonize
         self._data = {}
-        signal.setitimer(signal.ITIMER_REAL, seconds)
 
     def record(self):
         """Record PyAudio stream into StringIO output"""
@@ -63,22 +68,31 @@ class Meter(object):
         w.writeframes(b''.join(frames))
 
     def start(self):
+        if self.seconds:
+            signal.setitimer(signal.ITIMER_REAL, self.seconds)
         if self.collect:
             print 'Collecting RMS values...'
         if self.action:
+            # Interpret threshold
             self.get_threshold()
 
-        while True:
-            self.record()  # Record stream in `AUDIO_SEGMENT_LENGTH' long
-            data = self.output.getvalue()
-            segment = pydub.AudioSegment(data)
-            rms = segment.rms
-            if self.collect:
-                self.collect_rms(rms)
-            self.meter(rms)
-            if self.action:
-                if self.is_triggered(rms):
-                    self.execute()
+        try:
+            self.is_running = True
+            while True:
+                self.record()  # Record stream in `AUDIO_SEGMENT_LENGTH' long
+                data = self.output.getvalue()
+                segment = pydub.AudioSegment(data)
+                rms = segment.rms
+                if self.collect:
+                    self.collect_rms(rms)
+                self.meter(rms)
+                if self.action:
+                    if self.is_triggered(rms):
+                        self.execute()
+        except Exception, e:
+            print e
+            self.is_running = False
+            self.stop()
 
     def meter(self, rms):
         sys.stdout.write('\r%10d  ' % rms)
@@ -123,20 +137,18 @@ class Meter(object):
         else:
             if 'triggered' in self._data:
                 del self._data['triggered']
-        if self._data.get('triggered', None) == self.num:
+        if self._data.get('triggered') == self.num:
             return True
         return False
 
     def execute(self):
         if self.action == 'stop':
-            self.stop()
             print 'Stopped'
-            sys.exit(0)
-        if self.action == 'stop-exec':
-            self.stop()
+            raise Exception('stop')
+        elif self.action == 'stop-exec':
             print 'Stopped and exec'
-            sys.exit(0)
-        if self.action == 'exec':
+            raise Exception('stop-exec')
+        elif self.action == 'exec':
             print 'Exec'
 
     def collect_rms(self, rms):
@@ -187,6 +199,10 @@ def parse_args():
         if args.action in ['stop-exec', 'exec'] and not args.script:
             msg = 'must specify -e/--exec when using -a/--action'
             raise parser.error(msg)
+        if not args.trigger[1].isdigit():
+            msg = ('the second argument NUM to -t/--trigger must be an '
+                   'positive integer')
+            raise parser.error(msg)
     print args
 
 
@@ -196,7 +212,7 @@ def clear_stdout():
 
 def main():
     #signal.setitimer(signal.ITIMER_REAL, 3.5)
-    m = Meter(seconds=3, action='exec', threshold='+300', num=2)
+    m = Meter(action='stop-exec', threshold='+300', num=2)
     m.start()
 
 
