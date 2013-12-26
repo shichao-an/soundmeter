@@ -3,3 +3,4 @@
 *.swp
 dist
 *.egg-info
+run.py
