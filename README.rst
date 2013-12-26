@@ -13,3 +13,4 @@ Dependencies
 ------------
 - pyaudio
 - pydub
+- python-daemon
