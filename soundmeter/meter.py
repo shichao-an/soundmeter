@@ -1,10 +1,4 @@
-# Scripting file (for command)
-# TODO
-# soundmeter --threshold <RMS value> --duration <segments> --trigger script.sh
-# soundmeter --collect/-c [seconds]
-# soundmeter --log <filename>
 import argparse
-#import os
 import pyaudio
 import pydub
 import wave
