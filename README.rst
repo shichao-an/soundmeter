@@ -10,6 +10,7 @@ Features
 
 Dependencies
 ------------
+
+- argparse
 - pyaudio
 - pydub
-- python-daemon
