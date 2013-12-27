@@ -7,6 +7,7 @@ import wave
 import signal
 import subprocess
 import sys
+import time
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -41,6 +42,7 @@ class Meter(object):
         :param script: File object representing the script to be executed
         :param log: File object representing the log file
         :param daemonize: A boolean indicating whether meter is run as daemon
+        :param verbose: A boolean for verbose mode
         """
 
         global _soundmeter
@@ -64,6 +66,7 @@ class Meter(object):
         self.is_running = False
         self._graceful = False  # Graceful stop switch
         self._timeout = False
+        self._timer = None
         self._data = {}
         self.setup_logging()
 
@@ -87,6 +90,8 @@ class Meter(object):
     def start(self):
         if self.seconds:
             signal.setitimer(signal.ITIMER_REAL, self.seconds)
+        if self.verbose:
+            self._timer = time.time()
         if self.collect:
             print 'Collecting RMS values...'
         if self.action:
@@ -140,7 +145,8 @@ class Meter(object):
         self.stream.stop_stream()
         self.audio.terminate()
         msg = 'Stopped'
-        #print msg
+        self.verbose_info(msg, log=False)
+        # Log 'Stopped' anyway
         if self.log:
             self.logging.info(msg)
         if self.collect:
@@ -189,26 +195,31 @@ class Meter(object):
             if self.log:
                 self.logging.info(msg)
             raise self.__class__.StopException('stop')
+
         elif self.action == 'exec-stop':
             msg = 'Exec-Stop Action triggered'
-            self.popen()
             print msg
             if self.log:
                 self.logging.info(msg)
+            v = 'Executing %s' % self.script
+            self.verbose_info(v)
+            self.popen()
             raise self.__class__.StopException('exec-stop')
+
         elif self.action == 'exec':
             msg = 'Exec Action triggered'
-            self.popen()
             print msg
             if self.log:
                 self.logging.info(msg)
+            v = 'Executing %s' % self.script
+            self.verbose_info(v)
+            self.popen()
 
     def popen(self):
         if self.script:
             try:
                 subprocess.Popen([self.script])
             except OSError, e:
-                sys.stdout.write('\n')
                 msg = 'Cannot execute the shell script: %s' % e
                 print msg
                 if self.log:
@@ -236,6 +247,12 @@ class Meter(object):
                 level=logging.INFO)
             self.logging = logging.getLogger(__name__)
 
+    def verbose_info(self, msg, log=True):
+        if self.verbose:
+            print msg
+            if self.log and log:
+                self.logging.info(msg)
+
     def __repr__(self):
         u = self.action if self.action else 'no-action'
         return '<%s: %s>' % (self.__class__.__name__, u)
@@ -245,6 +262,7 @@ def main():
     if not os.path.exists(USER_DIR):
         os.makedirs(USER_DIR)
     kwargs = get_meter_kwargs()
+    print kwargs
     if kwargs['daemonize']:
         with daemon.DaemonContext():
             m = Meter(**kwargs)
