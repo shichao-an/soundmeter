@@ -14,6 +14,8 @@ except ImportError:
     from StringIO import StringIO
 from .settings import (PROG, FRAMES_PER_BUFFER, FORMAT, CHANNELS, RATE,
                        AUDIO_SEGMENT_LENGTH, USER_DIR, USER_LOGFILE)
+from .utils import get_file_path
+
 
 _soundmeter = None
 
@@ -135,8 +137,6 @@ class Meter(object):
         """Stop the stream and terminate PyAudio"""
         if not self._graceful:
             self._graceful = True
-        if self.log:
-            self.log.close()
         self.stream.stop_stream()
         self.audio.terminate()
         msg = 'Stopped'
@@ -178,7 +178,7 @@ class Meter(object):
         else:
             if 'triggered' in self._data:
                 del self._data['triggered']
-        if self._data.get('triggered') == self.num:
+        if self._data.get('triggered') >= self.num:
             return True
         return False
 
@@ -205,9 +205,9 @@ class Meter(object):
 
     def popen(self):
         if self.script:
-            filename = os.path.abspath(self.script.name)
             try:
-                subprocess.Popen([filename])
+                print self.script
+                subprocess.Popen([self.script])
             except OSError, e:
                 sys.stdout.write('\n')
                 msg = 'Cannot execute the shell script: %s' % e
@@ -232,10 +232,8 @@ class Meter(object):
 
     def setup_logging(self):
         if self.log:
-            filename = os.path.abspath(self.log.name)
-            print filename
             self.logging = logging.basicConfig(
-                filename=filename, format='%(asctime)s %(message)s',
+                filename=self.log, format='%(asctime)s %(message)s',
                 level=logging.INFO)
             self.logging = logging.getLogger(__name__)
 
@@ -304,7 +302,8 @@ def main():
         kwargs['threshold'] = kwargs['trigger'][0]
         kwargs['num'] = int(kwargs['trigger'][1])
     del kwargs['trigger']
-    # Set default value to `action'
+    kwargs['script'] = get_file_path(kwargs['script'])
+    kwargs['log'] = get_file_path(kwargs['log'])
     if kwargs['daemonize']:
         with daemon.DaemonContext():
             m = Meter(**kwargs)
