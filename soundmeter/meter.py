@@ -1,6 +1,5 @@
 import daemon
 import logging
-import os
 import pyaudio
 import pydub
 import wave
@@ -13,8 +12,8 @@ try:
 except ImportError:
     from StringIO import StringIO
 from .settings import (FRAMES_PER_BUFFER, FORMAT, CHANNELS, RATE,
-                       AUDIO_SEGMENT_LENGTH, USER_DIR)
-from .command import get_meter_kwargs
+                       AUDIO_SEGMENT_LENGTH)
+from .command import get_meter_kwargs, setup_user_dir
 
 
 _soundmeter = None
@@ -259,8 +258,7 @@ class Meter(object):
 
 
 def main():
-    if not os.path.exists(USER_DIR):
-        os.makedirs(USER_DIR)
+    setup_user_dir()
     kwargs = get_meter_kwargs()
     print kwargs
     if kwargs['daemonize']:

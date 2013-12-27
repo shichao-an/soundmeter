@@ -1,5 +1,6 @@
 import argparse
-from .settings import PROG, USER_LOGFILE, USER_SCRIPT
+import os
+from .settings import PROG, USER_LOGFILE, USER_SCRIPT, USER_DIR
 from .utils import get_file_path
 
 
@@ -62,3 +63,8 @@ def get_meter_kwargs():
     kwargs['script'] = get_file_path(kwargs['script'])
     kwargs['log'] = get_file_path(kwargs['log'])
     return kwargs
+
+
+def setup_user_dir():
+    if not os.path.exists(USER_DIR):
+        os.makedirs(USER_DIR)
