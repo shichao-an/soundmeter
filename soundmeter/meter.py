@@ -61,6 +61,7 @@ class Meter(object):
         self.daemonize = daemonize
         self.verbose = verbose
         self._graceful = False  # Graceful stop switch
+        self._timeout = False
         self._data = {}
         self.setup_logging()
 
@@ -112,22 +113,26 @@ class Meter(object):
             self.stop()
 
     def meter(self, rms):
-        sys.stdout.write('\r%10d  ' % rms)
-        sys.stdout.flush()
-        if self.log:
-            #now = datetime.datetime.now()
-            #line = '%s  %d\n' % (now.strftime(DATETIME_FORMAT), rms)
-            #self.log.write(line)
-            logging.info(rms)
+        if not self._graceful:
+            sys.stdout.write('\r%10d  ' % rms)
+            sys.stdout.flush()
+            if self.log:
+                self.logging.info(rms)
 
     def graceful(self):
         """Graceful stop so that while loop in start() will stop after the
          current recording cycle"""
         self._graceful = True
 
+    def timeout(self):
+        msg = 'Timeout'
+        print msg
+        if self.log:
+            self.logging.info(msg)
+        self.graceful()
+
     def stop(self):
         """Stop the stream and terminate PyAudio"""
-        sys.stdout.write('\n')
         if not self._graceful:
             self._graceful = True
         if self.log:
@@ -135,7 +140,7 @@ class Meter(object):
         self.stream.stop_stream()
         self.audio.terminate()
         msg = 'Stopped'
-        print msg
+        #print msg
         if self.log:
             self.logging.info(msg)
         if self.collect:
@@ -191,7 +196,6 @@ class Meter(object):
             if self.log:
                 self.logging.info(msg)
             raise self.__class__.StopException('exec-stop')
-            print 'execute script'
         elif self.action == 'exec':
             msg = 'Exec Action triggered'
             self.popen()
@@ -229,8 +233,11 @@ class Meter(object):
     def setup_logging(self):
         if self.log:
             filename = os.path.abspath(self.log.name)
+            print filename
             self.logging = logging.basicConfig(
-                filename=filename, format='%(asctime)s %(message)s')
+                filename=filename, format='%(asctime)s %(message)s',
+                level=logging.INFO)
+            self.logging = logging.getLogger(__name__)
 
     def __repr__(self):
         u = self.action if self.action else 'no-action'
@@ -309,11 +316,12 @@ def main():
 
 # Signal handlers
 def sigint_handler(signum, frame):
+    sys.stdout.write('\n')
     _soundmeter.graceful()
 
 
 def sigalrm_handler(signum, frame):
-    _soundmeter.graceful()
+    _soundmeter.timeout()
 
 
 # Register signal handlers
