@@ -61,6 +61,7 @@ class Meter(object):
         self.log = log
         self.daemonize = daemonize
         self.verbose = verbose
+        self.is_running = False
         self._graceful = False  # Graceful stop switch
         self._timeout = False
         self._data = {}
