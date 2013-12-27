@@ -1,4 +1,3 @@
-import argparse
 import daemon
 import logging
 import os
@@ -12,9 +11,9 @@ try:
     from cStringIO import StringIO
 except ImportError:
     from StringIO import StringIO
-from .settings import (PROG, FRAMES_PER_BUFFER, FORMAT, CHANNELS, RATE,
-                       AUDIO_SEGMENT_LENGTH, USER_DIR, USER_LOGFILE)
-from .utils import get_file_path
+from .settings import (FRAMES_PER_BUFFER, FORMAT, CHANNELS, RATE,
+                       AUDIO_SEGMENT_LENGTH, USER_DIR)
+from .command import get_meter_kwargs
 
 
 _soundmeter = None
@@ -206,7 +205,6 @@ class Meter(object):
     def popen(self):
         if self.script:
             try:
-                print self.script
                 subprocess.Popen([self.script])
             except OSError, e:
                 sys.stdout.write('\n')
@@ -242,68 +240,10 @@ class Meter(object):
         return '<%s: %s>' % (self.__class__.__name__, u)
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(usage='%(prog)s [options]',
-                                     prog=PROG)
-    parser.add_argument('-c', '--collect', action='store_true',
-                        help='collect RMS values to determine thresholds')
-    seconds_help = 'time in seconds to run the meter (default forever)'
-    parser.add_argument('-s', '--seconds', type=float,
-                        help=seconds_help)
-    parser.add_argument('-a', '--action',
-                        choices=['stop', 'exec-stop', 'exec'],
-                        help="triggered action")
-    trigger_help = 'trigger condition (threshold RMS and number of times)'
-    parser.add_argument('-t', '--trigger', nargs=2,
-                        metavar=('[+|-]THRESHOLD', 'NUM'),
-                        help=trigger_help)
-    parser.add_argument('-e', '--exec', dest='script', metavar='SCRIPT',
-                        type=argparse.FileType('r'),
-                        help='shell script to execute upon trigger')
-    parser.add_argument('-d', '--daemonize', action='store_true',
-                        help='run the meter in the background')
-    parser.add_argument('--log', nargs='?', metavar='LOGFILE',
-                        type=argparse.FileType('a'),
-                        const=USER_LOGFILE,
-                        help='log the meter (default to ~/.soundmeter/log)')
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help='verbose mode')
-    # Extra validation of arguments
-    args = parser.parse_args()
-    if args.collect:
-        if args.action or args.trigger:
-            msg = ('-c/--collect should not be used with -a/--action '
-                   'or -t/--trigger')
-            raise parser.error(msg)
-    if args.action:
-        if not args.trigger:
-            msg = 'must specify -t/--trigger when using -a/--action'
-            raise parser.error(msg)
-        if args.action in ['exec-stop', 'exec'] and not args.script:
-            msg = ("must specify -e/--exec when using -a/--action "
-                   "'exec-stop' or 'exec'")
-            raise parser.error(msg)
-        trigger_msg = ('the second argument NUM to -t/--trigger must be an '
-                       'positive integer')
-        if not args.trigger[1].isdigit():
-            raise parser.error(trigger_msg)
-        if args.trigger[1].isdigit() and int(args.trigger[1]) == 0:
-            raise parser.error(trigger_msg)
-    return args
-
-
 def main():
     if not os.path.exists(USER_DIR):
         os.makedirs(USER_DIR)
-    kwargs = dict(parse_args()._get_kwargs())
-    print kwargs
-    # Convert `trigger' into `threshold' and `num'
-    if kwargs['trigger'] is not None:
-        kwargs['threshold'] = kwargs['trigger'][0]
-        kwargs['num'] = int(kwargs['trigger'][1])
-    del kwargs['trigger']
-    kwargs['script'] = get_file_path(kwargs['script'])
-    kwargs['log'] = get_file_path(kwargs['log'])
+    kwargs = get_meter_kwargs()
     if kwargs['daemonize']:
         with daemon.DaemonContext():
             m = Meter(**kwargs)
