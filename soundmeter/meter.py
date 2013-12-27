@@ -184,10 +184,11 @@ def parse_args():
     parser.add_argument('-c', '--collect', action='store_true',
                         help='collect RMS values to determine thresholds')
     seconds_help = 'time in seconds to run the meter (default forever)'
-    parser.add_argument('-s', '--seconds',
+    parser.add_argument('-s', '--seconds', type=float,
                         help=seconds_help)
-    parser.add_argument('-a', '--action',
-                        choices=['stop', 'stop-exec', 'exec'])
+    parser.add_argument('-a', '--action', default='stop',
+                        choices=['stop', 'stop-exec', 'exec'],
+                        help="triggered action (defaults to 'stop')")
     trigger_help = 'trigger condition (threshold RMS and number of times)'
     parser.add_argument('-t', '--trigger', nargs=2,
                         metavar=('[+|-]THRESHOLD', 'NUM'),
@@ -198,23 +199,29 @@ def parse_args():
                         help='run the meter in the background')
     parser.add_argument('--log', nargs='?', metavar='LOGFILE',
                         help='log the meter (default to ~/.soundmeter/log)')
+
+    # Extra validation of arguments
     args = parser.parse_args()
     if args.collect:
-        if args.action:
-            msg = '-c/--collect should not be used with -a/--action'
+        if args.action or args.trigger:
+            msg = ('-c/--collect should not be used with -a/--action '
+                   'or -t/--trigger')
             raise parser.error(msg)
     if args.action:
         if not args.trigger:
             msg = 'must specify -t/--trigger when using -a/--action'
             raise parser.error(msg)
         if args.action in ['stop-exec', 'exec'] and not args.script:
-            msg = 'must specify -e/--exec when using -a/--action'
+            msg = ("must specify -e/--exec when using -a/--action "
+                   "'stop-exec' or 'exec'")
             raise parser.error(msg)
+        trigger_msg = ('the second argument NUM to -t/--trigger must be an '
+                       'positive integer')
         if not args.trigger[1].isdigit():
-            msg = ('the second argument NUM to -t/--trigger must be an '
-                   'positive integer')
-            raise parser.error(msg)
-    print args
+            raise parser.error(trigger_msg)
+        if args.trigger[1].isdigit() and int(args.trigger[1]) == 0:
+            raise parser.error(trigger_msg)
+    return args
 
 
 def clear_stdout():
@@ -222,8 +229,14 @@ def clear_stdout():
 
 
 def main():
-    #signal.setitimer(signal.ITIMER_REAL, 3.5)
-    m = Meter(action='stop-exec', threshold='+300', num=2)
+    kwargs = dict(parse_args()._get_kwargs())
+    # Convert `trigger' into `threshold' and `num'
+    if kwargs['trigger'] is not None:
+        kwargs['threshold'] = kwargs['trigger'][0]
+        kwargs['num'] = kwargs['trigger'][0]
+    del kwargs['trigger']
+    m = Meter(**kwargs)
+    #m = Meter(action='stop-exec', threshold='+300', num=2)
     m.start()
 
 
