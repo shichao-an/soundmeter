@@ -1,19 +1,19 @@
 import argparse
 import daemon
-import datetime
+import logging
 import os
 import pyaudio
 import pydub
 import wave
 import signal
+import subprocess
 import sys
 try:
     from cStringIO import StringIO
 except ImportError:
     from StringIO import StringIO
 from .settings import (PROG, FRAMES_PER_BUFFER, FORMAT, CHANNELS, RATE,
-                       AUDIO_SEGMENT_LENGTH, USER_DIR, USER_LOGFILE,
-                       DATETIME_FORMAT)
+                       AUDIO_SEGMENT_LENGTH, USER_DIR, USER_LOGFILE)
 
 _soundmeter = None
 
@@ -27,12 +27,12 @@ class Meter(object):
 
     def __init__(self, collect=False, seconds=None, action=None,
                  threshold=None, num=None, script=None, log=None,
-                 daemonize=False):
+                 daemonize=False, verbose=False):
         """
         :param collect: A boolean indicating whether collecting RMS values
         :param seconds: A float representing number of seconds to run the
             meter (None for forever)
-        :param action: The action type ('stop', 'stop-exec' or 'exec')
+        :param action: The action type ('stop', 'exec-stop' or 'exec')
         :param threshold: A string representing threshold and bound type (e.g.
             '+252', '-144')
         :param num: An integer indicating how many consecutive times the
@@ -59,8 +59,10 @@ class Meter(object):
         self.script = script
         self.log = log
         self.daemonize = daemonize
+        self.verbose = verbose
         self._graceful = False  # Graceful stop switch
         self._data = {}
+        self.setup_logging()
 
     def record(self):
         """Record PyAudio stream into StringIO output"""
@@ -87,8 +89,6 @@ class Meter(object):
         if self.action:
             # Interpret threshold
             self.get_threshold()
-            print self._threshold
-            print self.num
 
         try:
             self.is_running = True
@@ -115,11 +115,14 @@ class Meter(object):
         sys.stdout.write('\r%10d  ' % rms)
         sys.stdout.flush()
         if self.log:
-            now = datetime.datetime.now()
-            line = '%s  %d\n' % (now.strftime(DATETIME_FORMAT), rms)
-            self.log.write(line)
+            #now = datetime.datetime.now()
+            #line = '%s  %d\n' % (now.strftime(DATETIME_FORMAT), rms)
+            #self.log.write(line)
+            logging.info(rms)
 
     def graceful(self):
+        """Graceful stop so that while loop in start() will stop after the
+         current recording cycle"""
         self._graceful = True
 
     def stop(self):
@@ -131,6 +134,10 @@ class Meter(object):
             self.log.close()
         self.stream.stop_stream()
         self.audio.terminate()
+        msg = 'Stopped'
+        print msg
+        if self.log:
+            self.logging.info(msg)
         if self.collect:
             if self._data:
                 print 'Collected result:'
@@ -172,13 +179,37 @@ class Meter(object):
 
     def execute(self):
         if self.action == 'stop':
-            print 'Stopped'
+            msg = 'Stop Action triggered'
+            print msg
+            if self.log:
+                self.logging.info(msg)
             raise self.__class__.StopException('stop')
-        elif self.action == 'stop-exec':
-            print 'Stopped and exec'
-            raise self.__class__.StopException('stop-exec')
+        elif self.action == 'exec-stop':
+            msg = 'Exec-Stop Action triggered'
+            self.popen()
+            print msg
+            if self.log:
+                self.logging.info(msg)
+            raise self.__class__.StopException('exec-stop')
+            print 'execute script'
         elif self.action == 'exec':
-            print 'Exec'
+            msg = 'Exec Action triggered'
+            self.popen()
+            print msg
+            if self.log:
+                self.logging.info(msg)
+
+    def popen(self):
+        if self.script:
+            filename = os.path.abspath(self.script.name)
+            try:
+                subprocess.Popen([filename])
+            except OSError, e:
+                sys.stdout.write('\n')
+                msg = 'Cannot execute the shell script: %s' % e
+                print msg
+                if self.log:
+                    self.logging.info(msg)
 
     def monitor(self, rms):
         """This function is to be overridden"""
@@ -195,6 +226,12 @@ class Meter(object):
             self._data['max'] = rms
             self._data['avg'] = rms
 
+    def setup_logging(self):
+        if self.log:
+            filename = os.path.abspath(self.log.name)
+            self.logging = logging.basicConfig(
+                filename=filename, format='%(asctime)s %(message)s')
+
     def __repr__(self):
         u = self.action if self.action else 'no-action'
         return '<%s: %s>' % (self.__class__.__name__, u)
@@ -209,7 +246,7 @@ def parse_args():
     parser.add_argument('-s', '--seconds', type=float,
                         help=seconds_help)
     parser.add_argument('-a', '--action',
-                        choices=['stop', 'stop-exec', 'exec'],
+                        choices=['stop', 'exec-stop', 'exec'],
                         help="triggered action")
     trigger_help = 'trigger condition (threshold RMS and number of times)'
     parser.add_argument('-t', '--trigger', nargs=2,
@@ -224,7 +261,8 @@ def parse_args():
                         type=argparse.FileType('a'),
                         const=USER_LOGFILE,
                         help='log the meter (default to ~/.soundmeter/log)')
-
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='verbose mode')
     # Extra validation of arguments
     args = parser.parse_args()
     if args.collect:
@@ -236,9 +274,9 @@ def parse_args():
         if not args.trigger:
             msg = 'must specify -t/--trigger when using -a/--action'
             raise parser.error(msg)
-        if args.action in ['stop-exec', 'exec'] and not args.script:
+        if args.action in ['exec-stop', 'exec'] and not args.script:
             msg = ("must specify -e/--exec when using -a/--action "
-                   "'stop-exec' or 'exec'")
+                   "'exec-stop' or 'exec'")
             raise parser.error(msg)
         trigger_msg = ('the second argument NUM to -t/--trigger must be an '
                        'positive integer')

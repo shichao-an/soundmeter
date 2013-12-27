@@ -4,3 +4,4 @@
 dist
 *.egg-info
 run.py
+test.sh
