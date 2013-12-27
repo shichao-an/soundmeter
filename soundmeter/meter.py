@@ -4,6 +4,7 @@ import pydub
 import wave
 import signal
 import sys
+import threading
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -12,6 +13,7 @@ from .settings import (PROG, FRAMES_PER_BUFFER, FORMAT, CHANNELS, RATE,
                        AUDIO_SEGMENT_LENGTH)
 
 _soundmeter = None
+lock = threading.Lock()
 
 
 class Meter(object):
@@ -54,6 +56,7 @@ class Meter(object):
         self.script = script
         self.log = log
         self.daemonize = daemonize
+        self._graceful = False  # Graceful stop switch
         self._data = {}
 
     def record(self):
@@ -84,7 +87,7 @@ class Meter(object):
 
         try:
             self.is_running = True
-            while True:
+            while not self._graceful:
                 self.record()  # Record stream in `AUDIO_SEGMENT_LENGTH' long
                 data = self.output.getvalue()
                 segment = pydub.AudioSegment(data)
@@ -96,6 +99,8 @@ class Meter(object):
                     if self.is_triggered(rms):
                         self.execute()
                 self.monitor(rms)
+            self.is_running = False
+            self.stop()
 
         except self.__class__.StopException:
             self.is_running = False
@@ -105,8 +110,14 @@ class Meter(object):
         sys.stdout.write('\r%10d  ' % rms)
         sys.stdout.flush()
 
+    def graceful(self):
+        self._graceful = True
+
     def stop(self):
         """Stop the stream and terminate PyAudio"""
+        sys.stdout.write('\n')
+        if not self._graceful:
+            self._graceful = True
         self.stream.stop_stream()
         self.audio.terminate()
         if self.collect:
@@ -224,10 +235,6 @@ def parse_args():
     return args
 
 
-def clear_stdout():
-    sys.stdout.write('\r\n')
-
-
 def main():
     kwargs = dict(parse_args()._get_kwargs())
     # Convert `trigger' into `threshold' and `num'
@@ -236,21 +243,16 @@ def main():
         kwargs['num'] = kwargs['trigger'][0]
     del kwargs['trigger']
     m = Meter(**kwargs)
-    #m = Meter(action='stop-exec', threshold='+300', num=2)
     m.start()
 
 
 # Signal handlers
 def sigint_handler(signum, frame):
-    clear_stdout()
-    _soundmeter.stop()
-    sys.exit(1)
+    _soundmeter.graceful()
 
 
 def sigalrm_handler(signum, frame):
-    clear_stdout()
-    _soundmeter.stop()
-    sys.exit(0)
+    _soundmeter.graceful()
 
 
 # Register signal handlers
