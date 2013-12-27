@@ -1,19 +1,21 @@
 import argparse
+import daemon
+import datetime
+import os
 import pyaudio
 import pydub
 import wave
 import signal
 import sys
-import threading
 try:
     from cStringIO import StringIO
 except ImportError:
     from StringIO import StringIO
 from .settings import (PROG, FRAMES_PER_BUFFER, FORMAT, CHANNELS, RATE,
-                       AUDIO_SEGMENT_LENGTH)
+                       AUDIO_SEGMENT_LENGTH, USER_DIR, USER_LOGFILE,
+                       DATETIME_FORMAT)
 
 _soundmeter = None
-lock = threading.Lock()
 
 
 class Meter(object):
@@ -28,7 +30,8 @@ class Meter(object):
                  daemonize=False):
         """
         :param collect: A boolean indicating whether collecting RMS values
-        :param seconds: Number of seconds to run the meter (None for forever)
+        :param seconds: A float representing number of seconds to run the
+            meter (None for forever)
         :param action: The action type ('stop', 'stop-exec' or 'exec')
         :param threshold: A string representing threshold and bound type (e.g.
             '+252', '-144')
@@ -84,6 +87,8 @@ class Meter(object):
         if self.action:
             # Interpret threshold
             self.get_threshold()
+            print self._threshold
+            print self.num
 
         try:
             self.is_running = True
@@ -109,6 +114,10 @@ class Meter(object):
     def meter(self, rms):
         sys.stdout.write('\r%10d  ' % rms)
         sys.stdout.flush()
+        if self.log:
+            now = datetime.datetime.now()
+            line = '%s  %d\n' % (now.strftime(DATETIME_FORMAT), rms)
+            self.log.write(line)
 
     def graceful(self):
         self._graceful = True
@@ -118,6 +127,8 @@ class Meter(object):
         sys.stdout.write('\n')
         if not self._graceful:
             self._graceful = True
+        if self.log:
+            self.log.close()
         self.stream.stop_stream()
         self.audio.terminate()
         if self.collect:
@@ -197,18 +208,21 @@ def parse_args():
     seconds_help = 'time in seconds to run the meter (default forever)'
     parser.add_argument('-s', '--seconds', type=float,
                         help=seconds_help)
-    parser.add_argument('-a', '--action', default='stop',
+    parser.add_argument('-a', '--action',
                         choices=['stop', 'stop-exec', 'exec'],
-                        help="triggered action (defaults to 'stop')")
+                        help="triggered action")
     trigger_help = 'trigger condition (threshold RMS and number of times)'
     parser.add_argument('-t', '--trigger', nargs=2,
                         metavar=('[+|-]THRESHOLD', 'NUM'),
                         help=trigger_help)
     parser.add_argument('-e', '--exec', dest='script', metavar='SCRIPT',
+                        type=argparse.FileType('r'),
                         help='shell script to execute upon trigger')
     parser.add_argument('-d', '--daemonize', action='store_true',
                         help='run the meter in the background')
     parser.add_argument('--log', nargs='?', metavar='LOGFILE',
+                        type=argparse.FileType('a'),
+                        const=USER_LOGFILE,
                         help='log the meter (default to ~/.soundmeter/log)')
 
     # Extra validation of arguments
@@ -236,14 +250,23 @@ def parse_args():
 
 
 def main():
+    if not os.path.exists(USER_DIR):
+        os.makedirs(USER_DIR)
     kwargs = dict(parse_args()._get_kwargs())
+    print kwargs
     # Convert `trigger' into `threshold' and `num'
     if kwargs['trigger'] is not None:
         kwargs['threshold'] = kwargs['trigger'][0]
-        kwargs['num'] = kwargs['trigger'][0]
+        kwargs['num'] = int(kwargs['trigger'][1])
     del kwargs['trigger']
-    m = Meter(**kwargs)
-    m.start()
+    # Set default value to `action'
+    if kwargs['daemonize']:
+        with daemon.DaemonContext():
+            m = Meter(**kwargs)
+            m.start()
+    else:
+        m = Meter(**kwargs)
+        m.start()
 
 
 # Signal handlers
