@@ -8,3 +8,19 @@ class Monitor(Meter):
     def monitor(self, rms):
         """Extra monitor actions with RMS values"""
         pass
+
+    def prepopen(self):
+        """Extra code before executing the script"""
+        pass
+
+    def postpopen(self):
+        """Extra code after executing the script"""
+        pass
+
+    def prestop(self):
+        """Extra code before stop"""
+        pass
+
+    def poststop(self):
+        """Extra code after stop"""
+        pass

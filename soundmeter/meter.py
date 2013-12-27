@@ -26,6 +26,13 @@ class Meter(object):
     class StopException(Exception):
         pass
 
+    def __new__(cls, *args, **kwargs):
+        if kwargs['daemonize']:
+            with daemon.DaemonContext():
+                instance = object.__new__(cls, *args, **kwargs)
+                return instance
+        return object.__new__(cls, *args, **kwargs)
+
     def __init__(self, collect=False, seconds=None, action=None,
                  threshold=None, num=None, script=None, log=None,
                  daemonize=False, verbose=False):
@@ -139,6 +146,7 @@ class Meter(object):
 
     def stop(self):
         """Stop the stream and terminate PyAudio"""
+        self.prestop()
         if not self._graceful:
             self._graceful = True
         self.stream.stop_stream()
@@ -154,6 +162,7 @@ class Meter(object):
                 print '    min: %10d' % self._data['min']
                 print '    max: %10d' % self._data['max']
                 print '    avg: %10d' % int(self._data['avg'])
+        self.poststop()
 
     def get_threshold(self):
         """Get and validate raw RMS value from threshold"""
@@ -215,6 +224,7 @@ class Meter(object):
             self.popen()
 
     def popen(self):
+        self.prepopen()
         if self.script:
             try:
                 subprocess.Popen([self.script])
@@ -223,10 +233,7 @@ class Meter(object):
                 print msg
                 if self.log:
                     self.logging.info(msg)
-
-    def monitor(self, rms):
-        """This function is to be overridden"""
-        pass
+        self.postpopen()
 
     def collect_rms(self, rms):
         """Collect and calculate min, max and average RMS values"""
@@ -252,6 +259,26 @@ class Meter(object):
             if self.log and log:
                 self.logging.info(msg)
 
+    def monitor(self, rms):
+        """This function is to be overridden"""
+        pass
+
+    def prepopen(self):
+        """Pre-popen hook"""
+        pass
+
+    def postpopen(self):
+        """Post-popen hook"""
+        pass
+
+    def prestop(self):
+        """Pre-stop hook"""
+        pass
+
+    def poststop(self):
+        """Post-stop hook"""
+        pass
+
     def __repr__(self):
         u = self.action if self.action else 'no-action'
         return '<%s: %s>' % (self.__class__.__name__, u)
@@ -261,6 +288,7 @@ def main():
     setup_user_dir()
     kwargs = get_meter_kwargs()
     print kwargs
+    """
     if kwargs['daemonize']:
         with daemon.DaemonContext():
             m = Meter(**kwargs)
@@ -268,6 +296,9 @@ def main():
     else:
         m = Meter(**kwargs)
         m.start()
+    """
+    m = Meter(**kwargs)
+    m.start()
 
 
 # Signal handlers
