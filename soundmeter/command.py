@@ -1,5 +1,5 @@
 import argparse
-from .settings import PROG, USER_LOGFILE
+from .settings import PROG, USER_LOGFILE, USER_SCRIPT
 from .utils import get_file_path
 
 
@@ -18,8 +18,9 @@ def parse_args():
     parser.add_argument('-t', '--trigger', nargs=2,
                         metavar=('[+|-]THRESHOLD', 'NUM'),
                         help=trigger_help)
-    parser.add_argument('-e', '--exec', dest='script', metavar='SCRIPT',
-                        type=argparse.FileType('r'),
+    parser.add_argument('-e', '--exec', dest='script',
+                        metavar='SCRIPT', type=argparse.FileType('r'),
+                        default=USER_SCRIPT,
                         help='shell script to execute upon trigger')
     parser.add_argument('-d', '--daemonize', action='store_true',
                         help='run the meter in the background')
@@ -40,10 +41,8 @@ def parse_args():
         if not args.trigger:
             msg = 'must specify -t/--trigger when using -a/--action'
             raise parser.error(msg)
-        if args.action in ['exec-stop', 'exec'] and not args.script:
-            msg = ("must specify -e/--exec when using -a/--action "
-                   "'exec-stop' or 'exec'")
-            raise parser.error(msg)
+        if args.action == 'stop':
+            args.script = None
         trigger_msg = ('the second argument NUM to -t/--trigger must be an '
                        'positive integer')
         if not args.trigger[1].isdigit():
