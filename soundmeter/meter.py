@@ -314,7 +314,3 @@ def sigalrm_handler(signum, frame):
 # Register signal handlers
 signal.signal(signal.SIGINT, sigint_handler)
 signal.signal(signal.SIGALRM, sigalrm_handler)
-
-
-if __name__ == '__main__':
-    main()
