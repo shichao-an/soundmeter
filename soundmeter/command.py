@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 from .settings import PROG, USER_LOGFILE, USER_SCRIPT, USER_DIR
 from .utils import get_file_path
 
@@ -63,13 +64,18 @@ def parse_args():
         raise parser.error(msg)
 
     elif args.script:
-        msg = 'must specify -a/--action and -t/--trigger when using -e/--exec'
-        raise parser.error(msg)
+        if '-e' in sys.argv or '--exec' in sys.argv:
+            msg = ('must specify -a/--action and -t/--trigger when using '
+                   '-e/--exec')
+            raise parser.error(msg)
+        else:
+            args.script = None
     return args
 
 
 def get_meter_kwargs():
     kwargs = dict(parse_args()._get_kwargs())
+    print kwargs
     # Convert `trigger' into `threshold' and `num'
     if kwargs['trigger'] is not None:
         kwargs['threshold'] = kwargs['trigger'][0]
