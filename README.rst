@@ -31,9 +31,9 @@ Stop the soundmeter if RMS is greater than 211 consecutively for 3 times::
 
     $ soundmeter --trigger +211 3 --action stop
 
-Execute ``trigger.sh`` if RMS is greater than 211 consecutively for 3 times::
+Execute ``trigger.sh`` if RMS is greater than 211::
 
-    $ soundmeter --trigger +211 3 --action exec --exec trigger.sh
+    $ soundmeter --trigger +211 --action exec --exec trigger.sh
 
 Execute ``trigger.sh`` and stop soundmeter if RMS is less than 152 consecutively for 3 times::
 
@@ -54,7 +54,7 @@ The "soundmeter" command accepts the following options:
 
   -c, --collect  time in seconds to run the meter (default forever)
   -a ACTION_TYPE, --action ACTION_TYPE  triggered action (``stop``, ``exec-stop`` and ``exec``)
-  -t THRESHOLD, --trigger THRESHOLD  trigger condition (threshold RMS and an optional number of times)   
+  -t THRESHOLD, --trigger THRESHOLD  trigger condition (threshold RMS and an optional number of consecutive triggering times, which defaults 1)   
   -e FILE, --execute FILE  shell script to execute upon trigger (defaults to ``~/.soundmeter/trigger.sh``)
   -d, --daemonize  run the meter in the background
   --log LOGFILE  log the meter (defaults to ``~/.soundmeter/log``)
