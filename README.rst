@@ -52,7 +52,8 @@ Command-line Options
 
 The "soundmeter" command accepts the following options:
 
-  -c, --collect  time in seconds to run the meter (default forever)
+  -c, --collect  collect RMS values to determine thresholds
+  -s SECS, --seconds SECS  time in seconds to run the meter (default forever)
   -a ACTION_TYPE, --action ACTION_TYPE  triggered action (``stop``, ``exec-stop`` and ``exec``)
   -t THRESHOLD, --trigger THRESHOLD  trigger condition (threshold RMS and an optional number of consecutive triggering times, which defaults 1)   
   -e FILE, --execute FILE  shell script to execute upon trigger (defaults to ``~/.soundmeter/trigger.sh``)
