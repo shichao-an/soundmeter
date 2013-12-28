@@ -16,7 +16,7 @@ def parse_args():
                         choices=['stop', 'exec-stop', 'exec'],
                         help="triggered action")
     trigger_help = 'trigger condition (threshold RMS and number of times)'
-    parser.add_argument('-t', '--trigger', nargs=2,
+    parser.add_argument('-t', '--trigger', nargs='+',
                         metavar=('[+|-]THRESHOLD', 'NUM'),
                         help=trigger_help)
     parser.add_argument('-e', '--exec', dest='script',
@@ -38,18 +38,33 @@ def parse_args():
             msg = ('-c/--collect should not be used with -a/--action '
                    'or -t/--trigger')
             raise parser.error(msg)
+
     if args.action:
         if not args.trigger:
             msg = 'must specify -t/--trigger when using -a/--action'
             raise parser.error(msg)
         if args.action == 'stop':
             args.script = None
-        trigger_msg = ('the second argument NUM to -t/--trigger must be an '
-                       'positive integer')
-        if not args.trigger[1].isdigit():
+        if len(args.trigger) == 1:
+            args.trigger.append('1')
+        elif len(args.trigger) > 2:
+            trigger_msg = '-t/--trigger accepts at most two arguments'
             raise parser.error(trigger_msg)
-        if args.trigger[1].isdigit() and int(args.trigger[1]) == 0:
-            raise parser.error(trigger_msg)
+        else:
+            trigger_msg = ('the second argument NUM to -t/--trigger must be an'
+                           ' positive integer')
+            if not args.trigger[1].isdigit():
+                raise parser.error(trigger_msg)
+            if args.trigger[1].isdigit() and int(args.trigger[1]) == 0:
+                raise parser.error(trigger_msg)
+
+    elif args.trigger:
+        msg = 'must specify -a/--action when using -t/--trigger'
+        raise parser.error(msg)
+
+    elif args.script:
+        msg = 'must specify -a/--action and -t/--trigger when using -e/--exec'
+        raise parser.error(msg)
     return args
 
 
