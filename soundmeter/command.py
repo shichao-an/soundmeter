@@ -75,7 +75,6 @@ def parse_args():
 
 def get_meter_kwargs():
     kwargs = dict(parse_args()._get_kwargs())
-    print kwargs
     # Convert `trigger' into `threshold' and `num'
     if kwargs['trigger'] is not None:
         kwargs['threshold'] = kwargs['trigger'][0]

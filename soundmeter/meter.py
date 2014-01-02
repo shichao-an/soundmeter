@@ -287,7 +287,6 @@ class Meter(object):
 def main():
     setup_user_dir()
     kwargs = get_meter_kwargs()
-    print kwargs
     """
     if kwargs['daemonize']:
         with daemon.DaemonContext():
