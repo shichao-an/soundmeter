@@ -60,6 +60,7 @@ The "soundmeter" command accepts the following options:
   -d, --daemonize  run the meter in the background
   --log LOGFILE  log the meter (defaults to ``~/.soundmeter/log``)
   -v, --verbose         verbose mode
+  --segment SECONDS  audio segment length recorded in seconds (defaults to 0.5)
 
 Dependencies
 ------------

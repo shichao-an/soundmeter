@@ -33,7 +33,7 @@ def parse_args():
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='verbose mode')
     segment_help = 'audio segment length recorded in seconds (defaults to 0.5)'
-    parser.add_argument('--segment', help=segment_help)
+    parser.add_argument('--segment', metavar='SECONDS', help=segment_help)
 
     # Extra validation of arguments
     args = parser.parse_args()
