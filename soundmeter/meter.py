@@ -21,8 +21,6 @@ _soundmeter = None
 
 class Meter(object):
 
-    num_frames = int(RATE / FRAMES_PER_BUFFER * AUDIO_SEGMENT_LENGTH)
-
     class StopException(Exception):
         pass
 
@@ -35,7 +33,7 @@ class Meter(object):
 
     def __init__(self, collect=False, seconds=None, action=None,
                  threshold=None, num=None, script=None, log=None,
-                 daemonize=False, verbose=False):
+                 daemonize=False, verbose=False, segment=None):
         """
         :param collect: A boolean indicating whether collecting RMS values
         :param seconds: A float representing number of seconds to run the
@@ -49,6 +47,7 @@ class Meter(object):
         :param log: File object representing the log file
         :param daemonize: A boolean indicating whether meter is run as daemon
         :param verbose: A boolean for verbose mode
+        :param segment: A float representing `AUDIO_SEGMENT_LENGTH`
         """
 
         global _soundmeter
@@ -69,20 +68,20 @@ class Meter(object):
         self.log = log
         self.daemonize = daemonize
         self.verbose = verbose
+        self.segment = segment
         self.is_running = False
         self._graceful = False  # Graceful stop switch
         self._timeout = False
         self._timer = None
         self._data = {}
-        self.setup_logging()
+        self._setup_logging()
 
     def record(self):
         """Record PyAudio stream into StringIO output"""
 
         frames = []
-        num_frames = self.__class__.num_frames
         self.stream.start_stream()
-        for i in xrange(num_frames):
+        for i in xrange(self.num_frames):
             data = self.stream.read(FRAMES_PER_BUFFER)
             frames.append(data)
         self.stream.stop_stream()
@@ -94,6 +93,8 @@ class Meter(object):
         w.writeframes(b''.join(frames))
 
     def start(self):
+        segment = self.segment or AUDIO_SEGMENT_LENGTH
+        self.num_frames = int(RATE / FRAMES_PER_BUFFER * segment)
         if self.seconds:
             signal.setitimer(signal.ITIMER_REAL, self.seconds)
         if self.verbose:
@@ -246,18 +247,18 @@ class Meter(object):
             self._data['max'] = rms
             self._data['avg'] = rms
 
-    def setup_logging(self):
-        if self.log:
-            self.logging = logging.basicConfig(
-                filename=self.log, format='%(asctime)s %(message)s',
-                level=logging.INFO)
-            self.logging = logging.getLogger(__name__)
-
     def verbose_info(self, msg, log=True):
         if self.verbose:
             print msg
             if self.log and log:
                 self.logging.info(msg)
+
+    def _setup_logging(self):
+        if self.log:
+            self.logging = logging.basicConfig(
+                filename=self.log, format='%(asctime)s %(message)s',
+                level=logging.INFO)
+            self.logging = logging.getLogger(__name__)
 
     def monitor(self, rms):
         """This function is to be overridden"""

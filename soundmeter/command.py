@@ -32,6 +32,9 @@ def parse_args():
                         help='log the meter (default to ~/.soundmeter/log)')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='verbose mode')
+    segment_help = 'audio segment length recorded in seconds (defaults to 0.5)'
+    parser.add_argument('--segment', help=segment_help)
+
     # Extra validation of arguments
     args = parser.parse_args()
     if args.collect:
@@ -39,7 +42,15 @@ def parse_args():
             msg = ('-c/--collect should not be used with -a/--action '
                    'or -t/--trigger')
             raise parser.error(msg)
-
+    if args.segment:
+        try:
+            segment = float(args.segment)
+        except ValueError:
+            msg = '--segment must be an integer or float'
+            raise parser.error(msg)
+        if segment < 0.05:
+            msg = '--segment cannot be smaller than 0.05'
+            raise parser.error(msg)
     if args.action:
         if not args.trigger:
             msg = 'must specify -t/--trigger when using -a/--action'
@@ -82,6 +93,7 @@ def get_meter_kwargs():
     del kwargs['trigger']
     kwargs['script'] = get_file_path(kwargs['script'])
     kwargs['log'] = get_file_path(kwargs['log'])
+    kwargs['segment'] = float(kwargs['segment'])
     return kwargs
 
 
