@@ -25,7 +25,7 @@ class Meter(object):
         pass
 
     def __new__(cls, *args, **kwargs):
-        if kwargs['daemonize']:
+        if kwargs.get('daemonize'):
             with daemon.DaemonContext():
                 instance = object.__new__(cls, *args, **kwargs)
                 return instance

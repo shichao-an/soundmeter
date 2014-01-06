@@ -4,6 +4,7 @@ from .meter import Meter
 
 
 class TestMeter(TestCase):
+    """Test Meter class programmatically"""
     def setUp(self):
         self.meter = Meter(seconds=2.0)
 
@@ -14,6 +15,7 @@ class TestMeter(TestCase):
 
 
 class TestCommand(TestCase):
+    """Test command-line invoke of the program"""
     def setUp(self):
         self.env = TestFileEnvironment('./test-output')
 

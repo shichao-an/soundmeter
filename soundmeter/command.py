@@ -93,7 +93,8 @@ def get_meter_kwargs():
     del kwargs['trigger']
     kwargs['script'] = get_file_path(kwargs['script'])
     kwargs['log'] = get_file_path(kwargs['log'])
-    kwargs['segment'] = float(kwargs['segment'])
+    kwargs['segment'] = float(kwargs['segment']) \
+        if kwargs['segment'] is not None else None
     return kwargs
 
 
