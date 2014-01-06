@@ -3,21 +3,22 @@ import signal
 import subprocess
 from unittest import TestCase
 from scripttest import TestFileEnvironment
+from .command import setup_user_dir, create_executable
 from .meter import Meter
 
 
 def create_run_script():
     d = os.path.dirname(__file__)
     project_path = os.path.abspath(os.path.join(d, os.pardir))
-    run_script = os.path.join(project_path, 'run.py')
-    content = "#!/usr/bin/env python\n"
-    content += "from soundmeter.meter import main\n\n\n"
-    content += "main()"
+    run_script = os.path.join(project_path, 'run1.py')
+    content = '#!/usr/bin/env python\n'
+    content += 'from soundmeter.meter import main\n\n\n'
+    content += 'main()'
     if not os.path.exists(run_script):
-        with open(run_script, 'w') as f:
-            f.write(content)
+        create_executable(run_script, content)
 
 
+setup_user_dir()
 create_run_script()
 
 
