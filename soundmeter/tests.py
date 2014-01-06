@@ -1,6 +1,24 @@
+import os
+import signal
+import subprocess
 from unittest import TestCase
 from scripttest import TestFileEnvironment
 from .meter import Meter
+
+
+def create_run_script():
+    d = os.path.dirname(__file__)
+    project_path = os.path.abspath(os.path.join(d, os.pardir))
+    run_script = os.path.join(project_path, 'run.py')
+    content = "#!/usr/bin/env python\n"
+    content += "from soundmeter.meter import main\n\n\n"
+    content += "main()"
+    if not os.path.exists(run_script):
+        with open(run_script, 'w') as f:
+            f.write(content)
+
+
+create_run_script()
 
 
 class TestMeter(TestCase):
@@ -14,11 +32,45 @@ class TestMeter(TestCase):
         self.assertFalse(self.meter.is_running)
 
 
-class TestCommand(TestCase):
-    """Test command-line invoke of the program"""
+class TestBasicCommands(TestCase):
+    """Test basic command-line invoke of the program"""
     def setUp(self):
         self.env = TestFileEnvironment('./test-output')
 
     def test_default(self):
-        res = self.env.run('../run.py', '-s', '2')
+        res = self.env.run('../run.py', '-s', '1')
         self.assertIn('Timeout', res.stdout)
+        self.assertEqual(res.returncode, 0)
+
+    def test_collect(self):
+        res = self.env.run('../run.py', '-s', '1', '-c')
+        self.assertIn('Collecting', res.stdout)
+        self.assertEqual(res.returncode, 0)
+
+    def test_log(self):
+        res = self.env.run('../run.py', '-s', '1', '--log', 'log.txt')
+        self.assertIn('Timeout', res.stdout)
+        self.assertIn('log.txt', res.files_created)
+        self.assertEqual(res.returncode, 0)
+
+    def test_segment(self):
+        res = self.env.run('../run.py', '-s', '1', '--segment', '0.2')
+        self.assertIn('Timeout', res.stdout)
+        self.assertEqual(res.returncode, 0)
+
+    def tearDown(self):
+        pass
+
+
+class TestCommands(TestCase):
+    def test_sigint(self):
+        popen = subprocess.Popen(['./run.py'])
+        os.kill(popen.pid, signal.SIGINT)
+
+    def test_arguments(self):
+        popen = subprocess.Popen(['./run.py', '-t', '10000', '-a', 'stop'])
+        os.kill(popen.pid, signal.SIGINT)
+
+    def test_daemon(self):
+        popen = subprocess.Popen(['./run.py', '-d'])
+        os.kill(popen.pid, signal.SIGINT)
