@@ -9,5 +9,4 @@ install:
  - pip install scripttest
 script: nosetests
 before_install:
- - sudo modprobe snd-dummy
  - sudo apt-get install portaudio19-dev python-dev alsa-utils
