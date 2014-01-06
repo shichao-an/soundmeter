@@ -20,6 +20,10 @@ On Fedora/RHEL::
 
     $ sudo yum install portaudio-devel python-devel alsa-utils
 
+On OS X::
+
+    $ brew install portaudio
+
 PyPI packages
 ~~~~~~~~~~~~~
 - argparse
