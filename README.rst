@@ -8,6 +8,38 @@ Features
 - A command-line meter that supports triggering upon events
 - Monitor API for backend module programming
 
+Dependencies
+------------
+System packages
+~~~~~~~~~~~~~~~
+On Debian/Ubuntu::
+
+    $ sudo apt-get install portaudio19-dev python-dev alsa-utils
+
+On Fedora/RHEL::
+
+    $ sudo yum install portaudio-devel python-devel alsa-utils
+
+PyPI packages
+~~~~~~~~~~~~~
+- argparse
+- pyaudio
+- pydub
+- python-daemon
+
+
+Installation
+------------
+
+You can install with pip::
+
+  $ pip install soundmeter
+
+Or, you can download a source distribution and install with these commands::
+
+  $ python setup.py install
+
+
 
 Usage
 -----
@@ -62,21 +94,3 @@ The "soundmeter" command accepts the following options:
   -v, --verbose         verbose mode
   --segment SECONDS  audio segment length recorded in seconds (defaults to 0.5)
 
-Dependencies
-------------
-System packages
-~~~~~~~~~~~~~~~
-On Debian/Ubuntu::
-
-    $ sudo apt-get install portaudio19-dev python-dev alsa-utils
-
-On Fedora/RHEL::
-
-    $ sudo yum install portaudio-devel python-devel alsa-utils
-
-PyPI packages
-~~~~~~~~~~~~~
-- argparse
-- pyaudio
-- pydub
-- python-daemon
