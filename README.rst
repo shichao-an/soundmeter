@@ -64,7 +64,18 @@ The "soundmeter" command accepts the following options:
 
 Dependencies
 ------------
+System packages
+~~~~~~~~~~~~~~~
+On Debian/Ubuntu::
 
+    $ sudo apt-get install portaudio19-dev python-dev alsa-utils
+
+On Fedora/RHEL::
+
+    $ sudo yum install portaudio-devel python-devel alsa-utils
+
+PyPI packages
+~~~~~~~~~~~~~
 - argparse
 - pyaudio
 - pydub
