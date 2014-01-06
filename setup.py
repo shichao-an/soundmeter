@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 from soundmeter import __version__
 
 
-requires = ['argparse', 'pyaudio', 'pydub', 'python-daemon']
+requires = ['argparse', 'PyAudio', 'pydub', 'python-daemon']
 
 setup(
     name='soundmeter',

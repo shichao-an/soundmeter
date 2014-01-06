@@ -1,9 +1,8 @@
 import argparse
 import os
-import stat
 import sys
 from .settings import PROG, USER_LOGFILE, USER_SCRIPT, USER_DIR
-from .utils import get_file_path
+from .utils import get_file_path, create_executable
 
 
 def parse_args():
@@ -105,10 +104,3 @@ def setup_user_dir():
     if not os.path.exists(USER_SCRIPT):
         content = '!/bin/sh\n'
         create_executable(USER_SCRIPT, content)
-
-
-def create_executable(path, content):
-    with open(path, 'w') as f:
-        f.write(content)
-    s = os.stat(path)
-    os.chmod(path, s.st_mode | stat.S_IEXEC)

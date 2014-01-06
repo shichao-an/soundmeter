@@ -3,8 +3,9 @@ import signal
 import subprocess
 from unittest import TestCase
 from scripttest import TestFileEnvironment
-from .command import setup_user_dir, create_executable
+from .command import setup_user_dir
 from .meter import Meter
+from .utils import create_executable
 
 
 def create_run_script():
