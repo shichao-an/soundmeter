@@ -8,6 +8,7 @@ install:
  - pip install -r requirements.txt
  - pip install scripttest
 script: nosetests
-before_install: 
+before_install:
+ - cat /proc/asound/modules
+ - sudo modprobe snd-dummy
  - sudo apt-get install portaudio19-dev python-dev alsa-utils
- - export AUDIODEV=null
