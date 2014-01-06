@@ -11,7 +11,7 @@ from .utils import create_executable
 def create_run_script():
     d = os.path.dirname(__file__)
     project_path = os.path.abspath(os.path.join(d, os.pardir))
-    run_script = os.path.join(project_path, 'run1.py')
+    run_script = os.path.join(project_path, 'run.py')
     content = '#!/usr/bin/env python\n'
     content += 'from soundmeter.meter import main\n\n\n'
     content += 'main()'
@@ -41,23 +41,23 @@ class TestBasicCommands(TestCase):
 
     def test_default(self):
         res = self.env.run('../run.py', '-s', '1')
-        self.assertIn('Timeout', res.stdout)
+        assert 'Timeout' in res.stdout
         self.assertEqual(res.returncode, 0)
 
     def test_collect(self):
         res = self.env.run('../run.py', '-s', '1', '-c')
-        self.assertIn('Collecting', res.stdout)
+        assert 'Collecting' in res.stdout
         self.assertEqual(res.returncode, 0)
 
     def test_log(self):
         res = self.env.run('../run.py', '-s', '1', '--log', 'log.txt')
-        self.assertIn('Timeout', res.stdout)
-        self.assertIn('log.txt', res.files_created)
+        assert 'Timeout' in res.stdout
+        assert 'log.txt' in res.files_created
         self.assertEqual(res.returncode, 0)
 
     def test_segment(self):
         res = self.env.run('../run.py', '-s', '1', '--segment', '0.2')
-        self.assertIn('Timeout', res.stdout)
+        assert 'Timeout' in res.stdout
         self.assertEqual(res.returncode, 0)
 
     def tearDown(self):
