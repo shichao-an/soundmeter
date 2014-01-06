@@ -9,5 +9,5 @@ install:
  - pip install scripttest
 script: nosetests
 before_install: 
- - sudo apt-get install portaudio19-dev python-dev
+ - sudo apt-get install portaudio19-dev python-dev alsa-utils
  - export AUDIODEV=null
