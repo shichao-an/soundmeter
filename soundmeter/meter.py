@@ -15,6 +15,7 @@ except ImportError:
 from .settings import (FRAMES_PER_BUFFER, FORMAT, CHANNELS, RATE,
                        AUDIO_SEGMENT_LENGTH)
 from .command import get_meter_kwargs, setup_user_dir
+from .utils import noalsaerr
 
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -55,7 +56,8 @@ class Meter(object):
         global _soundmeter
         _soundmeter = self  # Register this meter globally
         self.output = StringIO()
-        self.audio = pyaudio.PyAudio()
+        with noalsaerr():
+            self.audio = pyaudio.PyAudio()
         self.stream = self.audio.open(format=FORMAT,
                                       channels=CHANNELS,
                                       rate=RATE,
