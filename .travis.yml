@@ -9,6 +9,5 @@ install:
  - pip install scripttest
 script: nosetests
 before_install:
- - cat /proc/asound/modules
  - sudo modprobe snd-dummy
  - sudo apt-get install portaudio19-dev python-dev alsa-utils
