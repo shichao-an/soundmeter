@@ -7,6 +7,7 @@ import signal
 import subprocess
 import sys
 import time
+import warnings
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -16,6 +17,7 @@ from .settings import (FRAMES_PER_BUFFER, FORMAT, CHANNELS, RATE,
 from .command import get_meter_kwargs, setup_user_dir
 
 
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 _soundmeter = None
 
 

@@ -2,8 +2,6 @@ from setuptools import setup, find_packages
 from soundmeter import __version__
 
 
-requires = ['argparse', 'PyAudio', 'pydub', 'python-daemon']
-
 setup(
     name='soundmeter',
     version=__version__,
@@ -14,7 +12,7 @@ setup(
     author_email='shichao.an@nyu.edu',
     url='https://github.com/shichao-an/soundmeter',
     license='BSD',
-    install_requires=requires,
+    install_requires=open('requirements.txt').read().splitlines(),
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,

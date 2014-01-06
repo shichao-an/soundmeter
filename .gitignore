@@ -6,3 +6,4 @@ dist
 run.py
 test-output
 test.sh
+.tox
