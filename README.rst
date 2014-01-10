@@ -98,3 +98,13 @@ The "soundmeter" command accepts the following options:
   -v, --verbose         verbose mode
   --segment SECONDS  audio segment length recorded in seconds (defaults to 0.5)
 
+Config
+~~~~~~
+Some "dependency-required" parameters can be configured at ~/.soundmeter/config. The default configuration is::
+
+    [soundmeter]
+    frames_per_buffer = 2048
+    format = 8
+    channels = 2
+    rate = 44100
+    audio_segment_length = 0.5
