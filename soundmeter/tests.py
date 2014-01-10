@@ -1,6 +1,7 @@
 import os
 import signal
 import subprocess
+import time
 from unittest import TestCase
 from scripttest import TestFileEnvironment
 from .command import setup_user_dir
@@ -8,10 +9,12 @@ from .meter import Meter
 from .utils import create_executable
 
 
+d = os.path.dirname(__file__)
+PROJECT_PATH = os.path.abspath(os.path.join(d, os.pardir))
+
+
 def create_run_script():
-    d = os.path.dirname(__file__)
-    project_path = os.path.abspath(os.path.join(d, os.pardir))
-    run_script = os.path.join(project_path, 'run.py')
+    run_script = os.path.join(PROJECT_PATH, 'run.py')
     content = '#!/usr/bin/env python\n'
     content += 'from soundmeter.meter import main\n\n\n'
     content += 'main()'
@@ -67,12 +70,24 @@ class TestBasicCommands(TestCase):
 class TestCommands(TestCase):
     def test_sigint(self):
         popen = subprocess.Popen(['./run.py'])
+        time.sleep(2)
         os.kill(popen.pid, signal.SIGINT)
 
     def test_arguments(self):
         popen = subprocess.Popen(['./run.py', '-t', '10000', '-a', 'stop'])
+        time.sleep(2)
         os.kill(popen.pid, signal.SIGINT)
 
     def test_daemon(self):
-        popen = subprocess.Popen(['./run.py', '-d'])
-        os.kill(popen.pid, signal.SIGINT)
+        popen = subprocess.Popen(['./run.py', '-d'], shell=True)
+        time.sleep(2)
+        popen.send_signal(signal.SIGINT)
+
+
+class TestConfig(TestCase):
+    def test_config(self):
+        config = os.path.join(PROJECT_PATH, 'sample_config')
+        os.environ['SOUNDMETER_TEST_CONFIG'] = config
+        popen = subprocess.Popen(['./run.py'], env=os.environ.copy())
+        time.sleep(2)
+        popen.send_signal(signal.SIGINT)
