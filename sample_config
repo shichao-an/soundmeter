@@ -1,4 +1,7 @@
-; sample config file at ~/.soundmeter/config
+; sample (and default) config file at ~/.soundmeter/config
 [soundmeter]
-frames_per_buffer = 1024
+frames_per_buffer = 2048
 format = 8
+channels = 2
+rate = 44100
+audio_segment_length = 0.5
