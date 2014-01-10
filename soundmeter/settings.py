@@ -10,8 +10,9 @@ USER_CONFIG = os.path.join(USER_DIR, 'config')
 USER_SCRIPT = os.path.join(USER_DIR, 'trigger.sh')
 
 config = ConfigParser.ConfigParser()
-config.read(USER_CONFIG)
+config.read(os.environ.get('SOUNDMETER_TEST_CONFIG') or USER_CONFIG)
 items = {}
+
 if config.has_section(PROG):
     items = dict(config.items(PROG))
     for name in items:
@@ -22,7 +23,6 @@ if config.has_section(PROG):
                 items[name] = float(items[name])
         except:
             items[name] = None
-
 FRAMES_PER_BUFFER = items.get('frames_per_buffer') or 2048
 FORMAT = items.get('format') or pyaudio.paInt16
 CHANNELS = items.get('channels') or 2
