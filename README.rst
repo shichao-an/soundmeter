@@ -1,6 +1,6 @@
 SoundMeter
 ==========
-SoundMeter is a command-line tool to obtain sound power in real time. It basically turns the audio recording functionality into a sound meter for machines that ship with microphones. It currently reveals the `root-mean-square (RMS) of sound fragments <http://docs.python.org/2/library/audioop.html#audioop.rms>`_, which is a measure of the power in an audio signal. 
+SoundMeter is a command-line tool to obtain sound power in real time. It basically turns the audio recording functionality into a sound meter for machines that ship with audio input devices (e.g. microphone). It currently reveals the `root-mean-square (RMS) of sound fragments <http://docs.python.org/2/library/audioop.html#audioop.rms>`_, which is a measure of the power in an audio signal. The actual values also depend on the system settings of sound input.
 
 Features
 --------
@@ -35,7 +35,7 @@ PyPI packages
 Installation
 ------------
 
-You can install with pip::
+You can install the package with pip::
 
   $ pip install soundmeter
 
@@ -47,7 +47,7 @@ Or, you can download a source distribution and install with these commands::
 
 Usage
 -----
-The simplest usage is to run soundmeter from command-line without any options::
+The simplest usage is to run "soundmeter" from command-line without any options::
 
     $ soundmeter
 
@@ -96,7 +96,7 @@ The "soundmeter" command accepts the following options:
   -d, --daemonize  run the meter in the background
   --log LOGFILE  log the meter (defaults to ``~/.soundmeter/log``)
   -v, --verbose         verbose mode
-  --segment SECONDS  audio segment length recorded in seconds (defaults to 0.5)
+  --segment SECONDS  audio segment length recorded in seconds (defaults to 0.5); when specified, it overrides ``audio_segment_length`` in ~/.soundmeter/config
 
 Config
 ~~~~~~
