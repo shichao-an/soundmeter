@@ -1,7 +1,7 @@
-# Default settings
 import ConfigParser
 import os
 import pyaudio
+
 
 PROG = 'soundmeter'
 USER_DIR = os.path.join(os.path.expanduser('~'), '.' + PROG)
