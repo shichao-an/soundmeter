@@ -18,6 +18,7 @@ from .command import get_meter_kwargs, setup_user_dir
 from .utils import noalsaerr
 
 
+__all__ = ['Meter']
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 _soundmeter = None
 
