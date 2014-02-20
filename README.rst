@@ -1,5 +1,9 @@
 SoundMeter
 ==========
+
+.. image:: https://pypip.in/v/soundmeter/badge.png
+        :target: https://pypi.python.org/pypi/soundmeter
+
 SoundMeter is a command-line tool to obtain sound power in real time. It basically turns the audio recording functionality into a sound meter for machines that ship with audio input devices (e.g. microphone). It currently reveals the `root-mean-square (RMS) of sound fragments <http://docs.python.org/2/library/audioop.html#audioop.rms>`_, which is a measure of the power in an audio signal. The actual values also depend on the system settings of sound input.
 
 Features
