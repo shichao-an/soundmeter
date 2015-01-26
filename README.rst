@@ -39,17 +39,13 @@ PyPI packages
 Installation
 ------------
 
-You can install the package with pip::
+You can install the package with pip using the following command to allow externally hosted packages::
 
-  $ pip install soundmeter
+  $ pip install soundmeter --allow-all-external --allow-unverified pyaudio
 
 Or, you can download a source distribution and install with these commands::
 
   $ python setup.py install
-
-Use the following command if you cannot install externally hosted packages::
-
-  $ pip install soundmeter --allow-all-external --allow-unverified pyaudio
 
 
 Usage
