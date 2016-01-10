@@ -43,23 +43,27 @@ class TestBasicCommands(TestCase):
         self.env = TestFileEnvironment('./test-output')
 
     def test_default(self):
-        res = self.env.run('../run.py', '-s', '1')
+        res = self.env.run('../run.py', '-s', '1',
+                           expect_stderr=True)
         assert 'Timeout' in res.stdout
         self.assertEqual(res.returncode, 0)
 
     def test_collect(self):
-        res = self.env.run('../run.py', '-s', '1', '-c')
+        res = self.env.run('../run.py', '-s', '1', '-c',
+                           expect_stderr=True)
         assert 'Collecting' in res.stdout
         self.assertEqual(res.returncode, 0)
 
     def test_log(self):
-        res = self.env.run('../run.py', '-s', '1', '--log', 'log.txt')
+        res = self.env.run('../run.py', '-s', '1', '--log', 'log.txt',
+                           expect_stderr=True)
         assert 'Timeout' in res.stdout
         assert 'log.txt' in res.files_created
         self.assertEqual(res.returncode, 0)
 
     def test_segment(self):
-        res = self.env.run('../run.py', '-s', '1', '--segment', '0.2')
+        res = self.env.run('../run.py', '-s', '1', '--segment', '0.2',
+                           expect_stderr=True)
         assert 'Timeout' in res.stdout
         self.assertEqual(res.returncode, 0)
 
