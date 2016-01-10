@@ -202,7 +202,8 @@ class Meter(object):
         else:
             if 'triggered' in self._data:
                 del self._data['triggered']
-        if self._data.get('triggered') >= self.num:
+        t = self._data.get('triggered')
+        if isinstance(t, int) and t >= self.num:
             return True
         return False
 
