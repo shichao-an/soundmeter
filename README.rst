@@ -97,7 +97,7 @@ The "soundmeter" command accepts the following options:
   -s SECS, --seconds SECS  time in seconds to run the meter (default forever)
   -a ACTION_TYPE, --action ACTION_TYPE  triggered action (``stop``, ``exec-stop`` and ``exec``)
   -t THRESHOLD, --trigger THRESHOLD  trigger condition (threshold RMS and an optional number of consecutive triggering times, which defaults 1)
-  -e FILE, --execute FILE  shell script to execute upon trigger (defaults to ``~/.soundmeter/trigger.sh``), can be configured to pass rms value as argument by setting ``rms_as_trigger_arg`` to ``True`` in ~/.soundmeter/config
+  -e FILE, --execute FILE  shell script to execute upon trigger (defaults to ``~/.soundmeter/trigger.sh``), can be configured to pass the "last triggering" RMS value as argument by setting ``rms_as_trigger_arg`` to ``True`` in ~/.soundmeter/config
   -d, --daemonize  run the meter in the background
   --log LOGFILE  log the meter (defaults to ``~/.soundmeter/log``)
   -v, --verbose         verbose mode
