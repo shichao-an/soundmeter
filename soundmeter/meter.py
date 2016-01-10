@@ -13,7 +13,7 @@ try:
 except ImportError:
     from StringIO import StringIO
 from .settings import (FRAMES_PER_BUFFER, FORMAT, CHANNELS, RATE,
-                       AUDIO_SEGMENT_LENGTH)
+                       AUDIO_SEGMENT_LENGTH, RMS_AS_TRIGGER_ARG)
 from .command import get_meter_kwargs, setup_user_dir
 from .utils import noalsaerr
 
@@ -122,7 +122,7 @@ class Meter(object):
                 self.meter(rms)
                 if self.action:
                     if self.is_triggered(rms):
-                        self.execute()
+                        self.execute(rms)
                 self.monitor(rms)
             self.is_running = False
             self.stop()
@@ -202,7 +202,7 @@ class Meter(object):
             return True
         return False
 
-    def execute(self):
+    def execute(self, rms):
         if self.action == 'stop':
             msg = 'Stop Action triggered'
             print msg
@@ -217,7 +217,7 @@ class Meter(object):
                 self.logging.info(msg)
             v = 'Executing %s' % self.script
             self.verbose_info(v)
-            self.popen()
+            self.popen(rms)
             raise self.__class__.StopException('exec-stop')
 
         elif self.action == 'exec':
@@ -227,13 +227,18 @@ class Meter(object):
                 self.logging.info(msg)
             v = 'Executing %s' % self.script
             self.verbose_info(v)
-            self.popen()
+            self.popen(rms)
 
-    def popen(self):
+    def popen(self, rms):
         self.prepopen()
         if self.script:
             try:
-                subprocess.Popen([self.script])
+                cmd = [self.script]
+                """If configured as True, rms value is passed
+                as an argument for the script"""
+                if (RMS_AS_TRIGGER_ARG):
+                    cmd.append(str(rms))
+                subprocess.Popen(cmd)
             except OSError, e:
                 msg = 'Cannot execute the shell script: %s' % e
                 print msg
