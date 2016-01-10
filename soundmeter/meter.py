@@ -33,18 +33,9 @@ class Meter(object):
     class StopException(Exception):
         pass
 
-    """
-    def __new__(cls, *args, **kwargs):
-        if kwargs.get('daemonize'):
-            with daemon.DaemonContext():
-                instance = object.__new__(cls, *args, **kwargs)
-                return instance
-        return object.__new__(cls, *args, **kwargs)
-    """
-
     def __init__(self, collect=False, seconds=None, action=None,
                  threshold=None, num=None, script=None, log=None,
-                 daemonize=False, verbose=False, segment=None):
+                 verbose=False, segment=None, *args, **kwargs):
         """
         :param bool collect: A boolean indicating whether collecting RMS values
         :param float seconds: A float representing number of seconds to run the
@@ -56,8 +47,6 @@ class Meter(object):
             threshold is reached before triggering the action
         :param script: File object representing the script to be executed
         :param log: File object representing the log file
-        :param bool daemonize: A boolean indicating whether meter is run as
-            daemon
         :param bool verbose: A boolean for verbose mode
         :param float segment: A float representing `AUDIO_SEGMENT_LENGTH`
         """
@@ -79,7 +68,6 @@ class Meter(object):
         self.num = num
         self.script = script
         self.log = log
-        self.daemonize = daemonize
         self.verbose = verbose
         self.segment = segment
         self.is_running = False
@@ -306,15 +294,19 @@ class Meter(object):
 def main():
     setup_user_dir()
     kwargs = get_meter_kwargs()
-    if kwargs['daemonize']:
-        with daemon.DaemonContext():
+    if kwargs.pop('daemonize'):
+        daemon_context = daemon.DaemonContext()
+        # python-daemon>=2.1 has initgroups=True by default but it requires
+        # root privileges.
+        # setting daemon_context.initgroups to False instead of passing
+        # arguments to daemon.DaemonContext will not break older versions
+        daemon_context.initgroups = False
+        with daemon_context:
             m = Meter(**kwargs)
             m.start()
     else:
         m = Meter(**kwargs)
         m.start()
-    # m = Meter(**kwargs)
-    # m.start()
 
 
 # Signal handlers
