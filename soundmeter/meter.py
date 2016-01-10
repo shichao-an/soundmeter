@@ -14,7 +14,7 @@ except ImportError:
     from StringIO import StringIO
 from .settings import (FRAMES_PER_BUFFER, FORMAT, CHANNELS, RATE,
                        AUDIO_SEGMENT_LENGTH, RMS_AS_TRIGGER_ARG)
-from .command import get_meter_kwargs, setup_user_dir
+from .cli import get_meter_kwargs, setup_user_dir
 from .utils import noalsaerr
 
 
