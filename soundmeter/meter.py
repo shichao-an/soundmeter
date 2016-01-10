@@ -1,17 +1,22 @@
+from __future__ import print_function
 import daemon
 import logging
 import pyaudio
 import pydub
 import wave
 import signal
+import six
 import subprocess
 import sys
 import time
 import warnings
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
+if six.PY2:
+    try:
+        from cStringIO import StringIO
+    except ImportError:
+        from StringIO import StringIO
+else:
+    from io import BytesIO as StringIO
 from .settings import (FRAMES_PER_BUFFER, FORMAT, CHANNELS, RATE,
                        AUDIO_SEGMENT_LENGTH, RMS_AS_TRIGGER_ARG)
 from .cli import get_meter_kwargs, setup_user_dir
@@ -28,30 +33,33 @@ class Meter(object):
     class StopException(Exception):
         pass
 
+    """
     def __new__(cls, *args, **kwargs):
         if kwargs.get('daemonize'):
             with daemon.DaemonContext():
                 instance = object.__new__(cls, *args, **kwargs)
                 return instance
         return object.__new__(cls, *args, **kwargs)
+    """
 
     def __init__(self, collect=False, seconds=None, action=None,
                  threshold=None, num=None, script=None, log=None,
                  daemonize=False, verbose=False, segment=None):
         """
-        :param collect: A boolean indicating whether collecting RMS values
-        :param seconds: A float representing number of seconds to run the
+        :param bool collect: A boolean indicating whether collecting RMS values
+        :param float seconds: A float representing number of seconds to run the
             meter (None for forever)
-        :param action: The action type ('stop', 'exec-stop' or 'exec')
-        :param threshold: A string representing threshold and bound type (e.g.
-            '+252', '-144')
-        :param num: An integer indicating how many consecutive times the
+        :param str action: The action type ('stop', 'exec-stop' or 'exec')
+        :param str threshold: A string representing threshold and bound type
+            (e.g. '+252', '-144')
+        :param int num: An integer indicating how many consecutive times the
             threshold is reached before triggering the action
         :param script: File object representing the script to be executed
         :param log: File object representing the log file
-        :param daemonize: A boolean indicating whether meter is run as daemon
-        :param verbose: A boolean for verbose mode
-        :param segment: A float representing `AUDIO_SEGMENT_LENGTH`
+        :param bool daemonize: A boolean indicating whether meter is run as
+            daemon
+        :param bool verbose: A boolean for verbose mode
+        :param float segment: A float representing `AUDIO_SEGMENT_LENGTH`
         """
 
         global _soundmeter
@@ -86,7 +94,7 @@ class Meter(object):
 
         frames = []
         self.stream.start_stream()
-        for i in xrange(self.num_frames):
+        for i in range(self.num_frames):
             data = self.stream.read(FRAMES_PER_BUFFER)
             frames.append(data)
         self.stream.stop_stream()
@@ -105,7 +113,7 @@ class Meter(object):
         if self.verbose:
             self._timer = time.time()
         if self.collect:
-            print 'Collecting RMS values...'
+            print('Collecting RMS values...')
         if self.action:
             # Interpret threshold
             self.get_threshold()
@@ -145,7 +153,7 @@ class Meter(object):
 
     def timeout(self):
         msg = 'Timeout'
-        print msg
+        print(msg)
         if self.log:
             self.logging.info(msg)
         self.graceful()
@@ -164,10 +172,10 @@ class Meter(object):
             self.logging.info(msg)
         if self.collect:
             if self._data:
-                print 'Collected result:'
-                print '    min: %10d' % self._data['min']
-                print '    max: %10d' % self._data['max']
-                print '    avg: %10d' % int(self._data['avg'])
+                print('Collected result:')
+                print('    min: %10d' % self._data['min'])
+                print('    max: %10d' % self._data['max'])
+                print('    avg: %10d' % int(self._data['avg']))
         self.poststop()
 
     def get_threshold(self):
@@ -205,14 +213,14 @@ class Meter(object):
     def execute(self, rms):
         if self.action == 'stop':
             msg = 'Stop Action triggered'
-            print msg
+            print(msg)
             if self.log:
                 self.logging.info(msg)
             raise self.__class__.StopException('stop')
 
         elif self.action == 'exec-stop':
             msg = 'Exec-Stop Action triggered'
-            print msg
+            print(msg)
             if self.log:
                 self.logging.info(msg)
             v = 'Executing %s' % self.script
@@ -222,7 +230,7 @@ class Meter(object):
 
         elif self.action == 'exec':
             msg = 'Exec Action triggered'
-            print msg
+            print(msg)
             if self.log:
                 self.logging.info(msg)
             v = 'Executing %s' % self.script
@@ -239,9 +247,9 @@ class Meter(object):
                 if (RMS_AS_TRIGGER_ARG):
                     cmd.append(str(rms))
                 subprocess.Popen(cmd)
-            except OSError, e:
+            except OSError as e:
                 msg = 'Cannot execute the shell script: %s' % e
-                print msg
+                print(msg)
                 if self.log:
                     self.logging.info(msg)
         self.postpopen()
@@ -259,7 +267,7 @@ class Meter(object):
 
     def verbose_info(self, msg, log=True):
         if self.verbose:
-            print msg
+            print(msg)
             if self.log and log:
                 self.logging.info(msg)
 
@@ -298,7 +306,6 @@ class Meter(object):
 def main():
     setup_user_dir()
     kwargs = get_meter_kwargs()
-    """
     if kwargs['daemonize']:
         with daemon.DaemonContext():
             m = Meter(**kwargs)
@@ -306,9 +313,8 @@ def main():
     else:
         m = Meter(**kwargs)
         m.start()
-    """
-    m = Meter(**kwargs)
-    m.start()
+    # m = Meter(**kwargs)
+    # m.start()
 
 
 # Signal handlers

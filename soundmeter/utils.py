@@ -1,4 +1,4 @@
-from ctypes import * # NOQA
+from ctypes import *  # NOQA
 from contextlib import contextmanager
 import os
 import stat

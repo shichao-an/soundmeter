@@ -1,4 +1,7 @@
-import ConfigParser
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 import os
 import pyaudio
 
@@ -9,7 +12,7 @@ USER_LOGFILE = os.path.join(USER_DIR, 'log')
 USER_CONFIG = os.path.join(USER_DIR, 'config')
 USER_SCRIPT = os.path.join(USER_DIR, 'trigger.sh')
 
-config = ConfigParser.ConfigParser()
+config = configparser.ConfigParser()
 config.read(os.environ.get('SOUNDMETER_TEST_CONFIG') or USER_CONFIG)
 items = {}
 
