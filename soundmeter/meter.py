@@ -20,7 +20,7 @@ else:
 from .settings import (FRAMES_PER_BUFFER, FORMAT, CHANNELS, RATE,
                        AUDIO_SEGMENT_LENGTH, RMS_AS_TRIGGER_ARG)
 from .cli import get_meter_kwargs, setup_user_dir
-from .utils import noalsaerr
+from .utils import noalsaerr, coroutine
 
 
 __all__ = ['Meter']
@@ -77,21 +77,28 @@ class Meter(object):
         self._data = {}
         self._setup_logging()
 
+    @coroutine
     def record(self):
-        """Record PyAudio stream into StringIO output"""
+        """
+        Record PyAudio stream into StringIO output
 
-        frames = []
-        self.stream.start_stream()
-        for i in range(self.num_frames):
-            data = self.stream.read(FRAMES_PER_BUFFER)
-            frames.append(data)
-        self.stream.stop_stream()
-        self.output.seek(0)
-        w = wave.open(self.output, 'wb')
-        w.setnchannels(CHANNELS)
-        w.setsampwidth(self.audio.get_sample_size(FORMAT))
-        w.setframerate(RATE)
-        w.writeframes(b''.join(frames))
+        This coroutine keeps stream open; the stream is closed in stop()
+        """
+
+        while True:
+            frames = []
+            self.stream.start_stream()
+            for i in range(self.num_frames):
+                data = self.stream.read(FRAMES_PER_BUFFER)
+                frames.append(data)
+            self.output.seek(0)
+            w = wave.open(self.output, 'wb')
+            w.setnchannels(CHANNELS)
+            w.setsampwidth(self.audio.get_sample_size(FORMAT))
+            w.setframerate(RATE)
+            w.writeframes(b''.join(frames))
+            w.close()
+            yield
 
     def start(self):
         segment = self.segment or AUDIO_SEGMENT_LENGTH
@@ -108,8 +115,9 @@ class Meter(object):
 
         try:
             self.is_running = True
+            record = self.record()
             while not self._graceful:
-                self.record()  # Record stream in `AUDIO_SEGMENT_LENGTH' long
+                record.send(True)  # Record stream `AUDIO_SEGMENT_LENGTH' long
                 data = self.output.getvalue()
                 segment = pydub.AudioSegment(data)
                 rms = segment.rms
@@ -135,7 +143,7 @@ class Meter(object):
                 self.logging.info(rms)
 
     def graceful(self):
-        """Graceful stop so that while loop in start() will stop after the
+        """Graceful stop so that the while loop in start() will stop after the
          current recording cycle"""
         self._graceful = True
 

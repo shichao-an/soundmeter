@@ -1,6 +1,7 @@
 from ctypes import *  # NOQA
 from contextlib import contextmanager
 import os
+import six
 import stat
 
 
@@ -41,3 +42,14 @@ def noalsaerr():
         asound.snd_lib_error_set_handler(None)
     except:
         yield
+
+
+def coroutine(func):
+    def start(*args, **kwargs):
+        g = func(*args, **kwargs)
+        if six.PY2:
+            g.next()
+        else:
+            g.__next__()
+        return g
+    return start
