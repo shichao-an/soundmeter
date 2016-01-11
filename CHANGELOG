@@ -1,3 +1,10 @@
+v0.1.3
+======
+
+- Supported RMS value to be passed as an argument to trigger scripts
+- Supported Python 3
+- Removed `daemonize` arguments from Meter class
+
 v0.1
 ====
 
