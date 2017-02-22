@@ -113,4 +113,4 @@ Some "dependency-required" parameters can be configured at ~/.soundmeter/config.
     channels = 2
     rate = 44100
     audio_segment_length = 0.5
-    rms_as_trigger_argument = False
+    rms_as_trigger_arg = False
