@@ -18,7 +18,8 @@ if six.PY2:
 else:
     from io import BytesIO as StringIO
 from .settings import (FRAMES_PER_BUFFER, FORMAT, CHANNELS, RATE,
-                       AUDIO_SEGMENT_LENGTH, RMS_AS_TRIGGER_ARG)
+                       INPUT_DEVICE_INDEX, AUDIO_SEGMENT_LENGTH,
+                       RMS_AS_TRIGGER_ARG)
 from .cli import get_meter_kwargs, setup_user_dir
 from .utils import noalsaerr, coroutine
 
@@ -58,8 +59,9 @@ class Meter(object):
             self.audio = pyaudio.PyAudio()
         self.stream = self.audio.open(format=FORMAT,
                                       channels=CHANNELS,
-                                      rate=RATE,
+                                      input_device_index=INPUT_DEVICE_INDEX,
                                       input=True,
+                                      rate=RATE,
                                       frames_per_buffer=FRAMES_PER_BUFFER)
         self.collect = collect
         self.seconds = seconds
