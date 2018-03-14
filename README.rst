@@ -115,3 +115,5 @@ Some "dependency-required" parameters can be configured at ~/.soundmeter/config.
     rate = 44100
     audio_segment_length = 0.5
     rms_as_trigger_arg = False
+
+There is also an ``input_device_index`` parameter, which specifies the index of input device to use. If unspecified, it uses the default input device.
