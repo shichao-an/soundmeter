@@ -10,7 +10,7 @@ currently reveals the [root-mean-square (RMS) of sound fragments], which
 is a measure of the power in an audio signal. The actual values also
 depend on the system settings of sound input.
 
-[![demo](https://asciinema.org/a/RdNCvGdsdvxdu8O9nLqkhhgaT.png)](https://asciinema.org/a/RdNCvGdsdvxdu8O9nLqkhhgaT.png "soundmeter demo")
+[![demo](https://asciinema.org/a/RdNCvGdsdvxdu8O9nLqkhhgaT.png)](https://asciinema.org/a/RdNCvGdsdvxdu8O9nLqkhhgaT "soundmeter demo")
 
 Features
 --------
