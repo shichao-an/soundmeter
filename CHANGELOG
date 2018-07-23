@@ -1,3 +1,8 @@
+v0.1.5
+======
+
+- Support multiple config sections and add -p/--profile command-line option.
+
 v0.1.4
 ======
 
