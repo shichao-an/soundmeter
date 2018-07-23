@@ -94,6 +94,7 @@ Command-line Options
 
 The "soundmeter" command accepts the following options:
 
+  -p PROFILE, --profile PROFILE  config profile (section name)
   -c, --collect  collect RMS values to determine thresholds
   -s SECS, --seconds SECS  time in seconds to run the meter (default forever)
   -a ACTION_TYPE, --action ACTION_TYPE  triggered action (``stop``, ``exec-stop`` and ``exec``)
@@ -115,5 +116,21 @@ Some "dependency-required" parameters can be configured at ~/.soundmeter/config.
     rate = 44100
     audio_segment_length = 0.5
     rms_as_trigger_arg = False
+
+You can have multiple sections in the config file and specify the one to use with the ``--profile`` command-line options. The default profile name is ``soundmeter``. For example::
+
+    [soundmeter]
+    frames_per_buffer = 2048
+    format = 8
+    channels = 2
+
+    [test]
+    frames_per_buffer = 1024
+    format = 8
+    channels = 1
+
+To use the ``test`` profile::
+
+    $ soundmeter --profile test ...
 
 There is also an ``input_device_index`` parameter, which specifies the index of input device to use. If unspecified, it uses the default input device.
