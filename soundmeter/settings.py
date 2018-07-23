@@ -12,30 +12,51 @@ USER_LOGFILE = os.path.join(USER_DIR, 'log')
 USER_CONFIG = os.path.join(USER_DIR, 'config')
 USER_SCRIPT = os.path.join(USER_DIR, 'trigger.sh')
 
-config = configparser.ConfigParser()
-config.read(os.environ.get('SOUNDMETER_TEST_CONFIG') or USER_CONFIG)
-items = {}
 
-if config.has_section(PROG):
-    items = dict(config.items(PROG))
-    for name in items:
-        try:
-            if name in ['frames_per_buffer', 'format', 'channels', 'rate',
-                        'input_device_index']:
-                items[name] = int(items[name])
-            elif name in ['audio_segment_length']:
-                items[name] = float(items[name])
-            elif name in ['rms_as_trigger_arg']:
-                items[name] = bool(items[name])
+class Config(object):
+
+    FRAMES_PER_BUFFER = 2048
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 2
+    INPUT_DEVICE_INDEX = None
+    RATE = 44100
+    AUDIO_SEGMENT_LENGTH = 0.5
+    RMS_AS_TRIGGER_ARG = False
+
+    def __init__(self, section=None):
+        config = configparser.ConfigParser()
+        config.read(os.environ.get('SOUNDMETER_TEST_CONFIG') or USER_CONFIG)
+        items = {}
+
+        if section is None:
+            if config.has_section(PROG):
+                section = PROG
             else:
-                raise Exception('Unknown name "%s" in config' % name)
-        except ValueError:
-            raise Exception('Invalid value to "%s" in config' % name)
+                return
 
-FRAMES_PER_BUFFER = items.get('frames_per_buffer') or 2048
-FORMAT = items.get('format') or pyaudio.paInt16
-CHANNELS = items.get('channels') or 2
-INPUT_DEVICE_INDEX = items.get('input_device_index')
-RATE = items.get('rate') or 44100
-AUDIO_SEGMENT_LENGTH = items.get('audio_segment_length') or 0.5
-RMS_AS_TRIGGER_ARG = items.get('rms_as_trigger_arg') or False
+        if config.has_section(section):
+            items = dict(config.items(section))
+            for name in items:
+                try:
+                    if name in ['frames_per_buffer', 'format', 'channels',
+                                'rate', 'input_device_index']:
+                        items[name] = int(items[name])
+                    elif name in ['audio_segment_length']:
+                        items[name] = float(items[name])
+                    elif name in ['rms_as_trigger_arg']:
+                        items[name] = bool(items[name])
+                    else:
+                        msg = \
+                            'Unknown name "%s" in config section "%s"' % (
+                                name, section)
+                        raise Exception(msg)
+                except ValueError:
+                    msg = \
+                        'Invalid value to "%s" in config section "%s"' % (
+                                name, section)
+                    raise Exception(msg)
+        else:
+            raise Exception('No section named "%s" in config' % section)
+
+        for name, value in items.items():
+            setattr(self, name.upper(), value)

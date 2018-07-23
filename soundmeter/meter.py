@@ -17,9 +17,7 @@ if six.PY2:
         from StringIO import StringIO
 else:
     from io import BytesIO as StringIO
-from .settings import (FRAMES_PER_BUFFER, FORMAT, CHANNELS, RATE,
-                       INPUT_DEVICE_INDEX, AUDIO_SEGMENT_LENGTH,
-                       RMS_AS_TRIGGER_ARG)
+from .settings import Config
 from .cli import get_meter_kwargs, setup_user_dir
 from .utils import noalsaerr, coroutine
 
@@ -36,7 +34,7 @@ class Meter(object):
 
     def __init__(self, collect=False, seconds=None, action=None,
                  threshold=None, num=None, script=None, log=None,
-                 verbose=False, segment=None, *args, **kwargs):
+                 verbose=False, segment=None, profile=None, *args, **kwargs):
         """
         :param bool collect: A boolean indicating whether collecting RMS values
         :param float seconds: A float representing number of seconds to run the
@@ -50,19 +48,22 @@ class Meter(object):
         :param log: File object representing the log file
         :param bool verbose: A boolean for verbose mode
         :param float segment: A float representing `AUDIO_SEGMENT_LENGTH`
+        :param str profile: The config profile
         """
 
         global _soundmeter
         _soundmeter = self  # Register this meter globally
+        self.config = Config(profile)
         self.output = StringIO()
         with noalsaerr():
             self.audio = pyaudio.PyAudio()
-        self.stream = self.audio.open(format=FORMAT,
-                                      channels=CHANNELS,
-                                      input_device_index=INPUT_DEVICE_INDEX,
-                                      input=True,
-                                      rate=RATE,
-                                      frames_per_buffer=FRAMES_PER_BUFFER)
+        self.stream = self.audio.open(
+            format=self.config.FORMAT,
+            channels=self.config.CHANNELS,
+            input_device_index=self.config.INPUT_DEVICE_INDEX,
+            input=True,
+            rate=self.config.RATE,
+            frames_per_buffer=self.config.FRAMES_PER_BUFFER)
         self.collect = collect
         self.seconds = seconds
         self.action = action
@@ -91,20 +92,21 @@ class Meter(object):
             frames = []
             self.stream.start_stream()
             for i in range(self.num_frames):
-                data = self.stream.read(FRAMES_PER_BUFFER)
+                data = self.stream.read(self.config.FRAMES_PER_BUFFER)
                 frames.append(data)
             self.output.seek(0)
             w = wave.open(self.output, 'wb')
-            w.setnchannels(CHANNELS)
-            w.setsampwidth(self.audio.get_sample_size(FORMAT))
-            w.setframerate(RATE)
+            w.setnchannels(self.config.CHANNELS)
+            w.setsampwidth(self.audio.get_sample_size(self.config.FORMAT))
+            w.setframerate(self.config.RATE)
             w.writeframes(b''.join(frames))
             w.close()
             yield
 
     def start(self):
-        segment = self.segment or AUDIO_SEGMENT_LENGTH
-        self.num_frames = int(RATE / FRAMES_PER_BUFFER * segment)
+        segment = self.segment or self.config.AUDIO_SEGMENT_LENGTH
+        self.num_frames = int(
+            self.config.RATE / self.config.FRAMES_PER_BUFFER * segment)
         if self.seconds:
             signal.setitimer(signal.ITIMER_REAL, self.seconds)
         if self.verbose:
@@ -243,7 +245,7 @@ class Meter(object):
                 cmd = [self.script]
                 """If configured as True, rms value is passed
                 as an argument for the script"""
-                if (RMS_AS_TRIGGER_ARG):
+                if (self.config.RMS_AS_TRIGGER_ARG):
                     cmd.append(str(rms))
                 subprocess.Popen(cmd)
             except OSError as e:

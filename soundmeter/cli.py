@@ -9,6 +9,8 @@ from .utils import get_file_path, create_executable
 def parse_args():
     parser = argparse.ArgumentParser(usage='%(prog)s [options]',
                                      prog=PROG)
+    parser.add_argument('-p', '--profile',
+                        help='config profile (section name)')
     parser.add_argument('-c', '--collect', action='store_true',
                         help='collect RMS values to determine thresholds')
     seconds_help = 'time in seconds to run the meter (default forever)'
